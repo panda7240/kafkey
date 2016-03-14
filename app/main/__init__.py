@@ -2,4 +2,6 @@ from flask import Blueprint
 
 main = Blueprint('main', __name__)
 
-from . import views, errors
+from app.main.controller import error_controller,user_controller, message_controller, kafka_controller
+
+

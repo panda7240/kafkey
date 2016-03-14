@@ -1,16 +1,275 @@
-{% extends "base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kafkey</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/color.css">
+{#    <link rel="stylesheet" type="text/css" href="/css/common.css">#}
+    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/easyloader.js"></script>
+{#    <script type="text/javascript" src="/static/js/common.js?1.0"></script>#}
+    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-filter.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-detailview.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/locale/easyui-lang-zh_CN.js"></script>
+    <style type="text/css">
+        .heard {
+            background-image: -webkit-linear-gradient(#1d9ce5, #2fa4e7 50%, #178acc);
+            background-image: -moz-linear-gradient(#1d9ce5, #2fa4e7 50%, #178acc);
+        }
+    </style>
+</head>
+<body>
+<!--此处style属性必须加上position: absolute;否则嵌入的iframe在chrome下会影响整个页面的布局-->
+<div id="divFull" fit="true" style="position: absolute;" class="easyui-layout">
+    <div data-options="region:'north'" class="heard" style="height:50px;">
+        <div style="padding-left:15px;"><h2 style="color:#FFF;">Kafkey</h2></div>
+        <div style="margin-top: -28px;text-align: right;">
+            <label style="font-size: 14px;margin-right: 5px;color:#FFF;"> {{ username }}</label>
+            <a href="#" style="margin-right: 15px;font-size: 14px;color:#FFF;" onclick="logout();">退出</a>
+        </div>
+    </div>
+    <div data-options="region:'west',title:'菜单',split:true" style="width:180px;">
+        <ul class="easyui-tree">
+            <li>
+                <span>Kafka监控管理</span>
+                <ul>
+                    <li>
+                        <a dataLink="/xxx"
+                           onclick="createIframeTabPanel(this)">Cluster管理</a>
+                    </li>
+                    <li>
+                        <a dataLink="/xxx"
+                           onclick="createIframeTabPanel(this)">Topic管理</a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <span>消息跟踪</span>
+                <ul>
+                    <li>
+                        <a dataLink="/xxx"
+                           onclick="createIframeTabPanel(this)">消息检索</a>
+                    </li>
+                    <li>
+                        <a dataLink="/xxx"
+                           onclick="createIframeTabPanel(this)">健康统计</a>
+                    </li>
+                </ul>
+            </li>
 
-{% block title %}Flasky{% endblock %}
-
-{% block page_content %}
-<div class="page-header">
-    <h1>Hello, {% if name %}{{ name }}{% else %}Stranger{% endif %}!</h1>
-    {% if not known %}
-    <p>Pleased to meet you!</p>
-    {% else %}
-    <p>Happy to see you again!</p>
-    {% endif %}
+            <li>
+                <span>系统管理</span>
+                <ul>
+                    <li>
+                        <a dataLink="/xxx" onclick="createTabPanel(this)">用户管理</a>
+                    </li>
+                    <li>
+                        <a dataLink="/xxx" onclick="createTabPanel(this)">日志检索</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div data-options="region:'center'">
+        <div id="tabs" class="easyui-tabs" fit="true">
+            <div id="chartForce" title="首页" style="padding:10px" data-options="tools:[
+				{iconCls:'icon-reload',	handler:function(){
+				    window.frames['welcomeIframe'].location.reload(true)
+				}}]">
+                <input class="easyui-searchbox" data-options="searcher:doSearch" style="width:200px">
+                <iframe id="welcomeIframe" name="welcomeIframe" src="" frameborder="0"
+                        width="100%" height="97%">
+                </iframe>
+            </div>
+        </div>
+    </div>
 </div>
-{{ wtf.quick_form(form) }}
-{% endblock %}
+
+<div id="mm" class="easyui-menu" style="width:120px;">
+    <div id="mm-tabclose" name="1">关闭</div>
+    <div id="mm-tabcloseall" name="2">全部关闭</div>
+    <div id="mm-tabcloseother" name="3">除此之外全部关闭</div>
+    <div class="menu-sep"></div>
+    <div id="mm-tabcloseright" name="4">当前页右侧全部关闭</div>
+    <div id="mm-tabcloseleft" name="5">当前页左侧全部关闭</div>
+</div>
+</body>
+
+<style type="text/css">
+    .fitem {
+        margin-bottom: 5px;
+    }
+
+    .fitem label {
+        display: inline-block;
+        width: 80px;
+    }
+</style>
+
+<script type="text/javascript" charset="utf-8">
+    function logout() {
+        $.messager.confirm('请确认', '你确定要退出系统吗?', function (r) {
+            if (r) {
+                window.location.href = "/logout";
+            }
+        });
+    }
+    function doSearch(value) {
+        $('#welcomeIframe').attr("src", "/welcome.html?sSearch=" + value);
+    }
+    //创建iframetab页
+    function createIframeTabPanel(obj) {
+        var title = $(obj).text();
+        var href = $(obj).attr("dataLink");
+        //获取tab
+        var iframeName = "link_iframeName";
+        var tab = $("#tabs").tabs('getTab', title);
+        if (tab) {
+            $("#tabs").tabs('select', title);
+            iframeName += $("#tabs").tabs('getTabIndex', tab);
+            $("#" + iframeName).attr('src', href);
+            return;
+        }
+        //如果存在，激活
+        iframeName += $("#tabs").tabs('tabs').length.toString();
+        var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.5%"></iframe>';
+        //嵌入的其他链接
+        $('#tabs').tabs('add', {
+            title: title,
+            content: content,
+            closable: true,
+            tools: [
+                {
+                    iconCls: 'icon-reload',
+                    handler: function () {
+                        $("#" + iframeName).attr('src', href);
+                    }
+                }
+            ]
+        });
+    }
+    //创建普通的tab页
+    function createTabPanel(obj) {
+        var title = $(obj).text();
+        //获取tab
+        var tab = $("#tabs").tabs('getTab', title);
+        //如果存在，激活
+        if (tab) {
+            $("#tabs").tabs('select', title);
+            tab.panel('refresh', $(obj).attr("dataLink"));
+            return;
+        }
+        $('#tabs').tabs('add', {
+            title: title,
+            href: $(obj).attr("dataLink"),
+            closable: true,
+            tools: [
+                {
+                    iconCls: 'icon-reload',
+                    handler: function () {
+                        $("#tabs").tabs('getTab', title).panel('refresh');
+                    }
+                }
+            ]
+        });
+    }
+    //删除Tabs
+    function closeTab(menu, type) {
+        var allTabs = $("#tabs").tabs('tabs');
+        var allTabtitle = [];
+        $.each(allTabs, function (i, n) {
+            var opt = $(n).panel('options');
+            if (opt.closable)
+                allTabtitle.push(opt.title);
+        });
+        var curTabTitle = $(menu).data("tabTitle");
+        var curTabIndex = $("#tabs").tabs("getTabIndex", $("#tabs").tabs("getTab", curTabTitle));
+        switch (type) {
+            case "1":
+                $("#tabs").tabs("close", curTabTitle);
+                return false;
+                break;
+            case "2":
+                for (var i = 0; i < allTabtitle.length; i++) {
+                    $('#tabs').tabs('close', allTabtitle[i]);
+                }
+                break;
+            case "3":
+                for (var i = 0; i < allTabtitle.length; i++) {
+                    if (curTabTitle != allTabtitle[i])
+                        $('#tabs').tabs('close', allTabtitle[i]);
+                }
+                $('#tabs').tabs('select', curTabTitle);
+                break;
+            case "4":
+                for (var i = curTabIndex; i < allTabtitle.length; i++) {
+                    $('#tabs').tabs('close', allTabtitle[i]);
+                }
+                $('#tabs').tabs('select', curTabTitle);
+                break;
+            case "5":
+                for (var i = 0; i < curTabIndex - 1; i++) {
+                    $('#tabs').tabs('close', allTabtitle[i]);
+                }
+                $('#tabs').tabs('select', curTabTitle);
+                break;
+        }
+
+    }
+    //监听右键事件，创建右键菜单
+    $('#tabs').tabs({
+        onContextMenu: function (e, title, index) {
+            e.preventDefault();
+            if (index > 0) {
+                $('#mm').menu('show', {
+                    left: e.pageX,
+                    top: e.pageY
+                }).data("tabTitle", title);
+            }
+        }
+    });
+    //右键菜单click
+    $("#mm").menu({
+        onClick: function (item) {
+            closeTab(this, item.name);
+        }
+    });
+{#    $('#welcomeIframe').attr("src", "/welcome.html");#}
+
+
+    /**
+     *子页面可用此函数创建选项卡, 给zipkin数据展示页面使用
+     **/
+    function createTabPanelForChild(title, href) {
+        var iframeName = "link_iframeName";
+        var tab = $("#tabs").tabs('getTab', title);
+        if (tab) {
+            $("#tabs").tabs('select', title);
+            iframeName += $("#tabs").tabs('getTabIndex', tab);
+            $("#" + iframeName).attr('src', href);
+            return;
+        }
+        //如果存在，激活
+        iframeName += $("#tabs").tabs('tabs').length.toString();
+        var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.8%"></iframe>';
+        //嵌入的其他链接
+        $('#tabs').tabs('add', {
+            title: title,
+            content: content,
+            closable: true,
+            tools: [
+                {
+                    iconCls: 'icon-reload',
+                    handler: function () {
+                        $("#" + iframeName).attr('src', href);
+                    }
+                }
+            ]
+        });
+    }
+</script>
+</html>

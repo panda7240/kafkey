@@ -1,0 +1,28 @@
+ul.purple {
+    margin-top: 0px;
+    padding-left: 0;
+}
+
+ul.purple li {
+    margin: 0px 0px 0px 0px;
+    list-style-type: none;
+    display: block;
+    padding: 2px 10px;
+    border-bottom: 1px solid #DFDFDF;
+}
+
+ul.purple li:hover {
+    background-color: #eaf2ff;
+    /*color: #9F9F9F;*/
+}
+
+ul.purple li.hlight {
+    background-color: #ffe48d;
+    /*color: #9F9F9F;*/
+}
+
+ul.purple pre{
+    text-align: left;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
