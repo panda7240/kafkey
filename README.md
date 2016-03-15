@@ -12,6 +12,12 @@ kafka + key : kafka的监控管理工具
 
 ## 部署
 
+* 创建虚拟环境
+
+	```
+	virtualenv venv 
+	```
+
 * 激活虚拟环境
 
 	```
