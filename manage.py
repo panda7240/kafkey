@@ -2,11 +2,13 @@
 import time
 from app import create_app, db
 from app.main.model.user import User
+from config import config
 import os
 from flask.ext.script import Manager, Shell
 from flask.ext.migrate import Migrate, MigrateCommand
 
-app = create_app(os.getenv('KAFKEY_CONFIG') or 'default')
+config_name = os.getenv('KAFKEY_CONFIG') or 'default'
+app = create_app(config_name)
 manager = Manager(app)
 migrate = Migrate(app, db)
 
@@ -36,7 +38,9 @@ def test():
     tests = unittest.TestLoader().discover('tests')
     unittest.TextTestRunner(verbosity=2).run(tests)
 
-
+@manager.command
+def printconfig():
+    print config[config_name].LOG_LEVEL
 
 
 
