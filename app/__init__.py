@@ -16,8 +16,17 @@ def create_app(config_name):
     db.init_app(app)
     moment.init_app(app)
 
-    from .main import main as main_blueprint
-    app.register_blueprint(main_blueprint)
+    from app.main.controller.auth_controller import auth_blueprint
+    app.register_blueprint(auth_blueprint)
+
+    from app.main.controller.user_controller import user_blueprint
+    app.register_blueprint(user_blueprint)
+
+    from app.main.controller.kafka_controller import kafka_blueprint
+    app.register_blueprint(kafka_blueprint)
+
+    from app.main.controller.message_controller import message_blueprint
+    app.register_blueprint(message_blueprint)
 
     return app
 

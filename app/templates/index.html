@@ -3,18 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Kafkey</title>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/default/easyui.css">
-    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/icon.css">
-    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/color.css">
-    {#    <link rel="stylesheet" type="text/css" href="/css/common.css">#}
-    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.easyui.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/easyloader.js"></script>
-    {#    <script type="text/javascript" src="/static/js/common.js?1.0"></script>#}
-    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-filter.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-detailview.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/locale/easyui-lang-zh_CN.js"></script>
+    {% import 'macros.html' as macros %}
+
+    {{ macros.common_source() }}
+
     <style type="text/css">
         .heard {
             background-image: -webkit-linear-gradient(#1d9ce5, #2fa4e7 50%, #178acc);
