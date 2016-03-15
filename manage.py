@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 import time
 from app import create_app, db
 from app.main.model.user import User

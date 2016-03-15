@@ -1,4 +1,6 @@
+# -*- coding:utf-8 -*-
 from app.main.controller import login_required
+from app.main.model.user import User
 from flask import render_template, session, redirect, url_for, current_app, request, Blueprint
 
 auth_blueprint = Blueprint('auth_blueprint', __name__)
@@ -13,20 +15,16 @@ def index():
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method != 'POST':
-        from jinja2 import TemplateNotFound
-        try:
-            return render_template('login.html')
-        except TemplateNotFound:
-            from os import abort
-            abort(404)
     userName = request.values.get('user_account')
     password = request.values.get('user_pwd')
-    if userName == 'admin' and password == 'test':
-        session['user'] = userName
-        return 'SUCCESS'
+
+    if userName is not None and password is not None:
+        user = User.query.filter_by(name=userName).first()
+        if user is not None and user.verify_password(password):
+            session['user'] = userName
+            return 'SUCCESS'
     else:
-        pass
+        return render_template('login.html')
 
 
 @auth_blueprint.route('/logout')

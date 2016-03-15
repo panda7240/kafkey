@@ -1,12 +1,16 @@
+# -*- coding:utf-8 -*-
+
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.moment import Moment
+
 from flask.ext.sqlalchemy import SQLAlchemy
 from config import config
 
 db = SQLAlchemy()
 bootstrap = Bootstrap()
 moment = Moment()
+
 
 def create_app(config_name):
     app = Flask(__name__)
