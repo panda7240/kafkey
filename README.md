@@ -48,6 +48,12 @@ kafka + key : kafka的监控管理工具
 	python manage.py runserver --help 
 	```
 	
+* 查看测试代码覆盖率
+
+	```
+	python manage.py test --coverage
+	```
+	
 * **关于migrate操作(此处暂时忽略)**
 
 	* 创建数据迁移仓库

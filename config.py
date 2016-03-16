@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import logging
 
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -8,6 +9,20 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     LOG_LEVEL = 'INFO'
+    LOG_FILE_PATH = 'kafkey.log'
+
+    # 创建一个root logger
+    logger = logging.getLogger('')
+    # 创建一个handler，用于写入日志文件
+    file_handler = logging.FileHandler(LOG_FILE_PATH)
+    # 再创建一个handler，用于输出到控制台
+    console_handler = logging.StreamHandler()
+    # 定义handler的输出格式
+    formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
     @staticmethod
     def init_app(app):
@@ -19,16 +34,22 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
+    Config.logger.setLevel(logging.DEBUG)
+
 
 class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
 
+    Config.logger.setLevel(logging.DEBUG)
+
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+
+    Config.logger.setLevel(logging.INFO)
 
 
 config = {

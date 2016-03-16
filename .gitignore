@@ -66,3 +66,5 @@ venv/
 .idea
 
 *.sqlite
+
+tmp/
