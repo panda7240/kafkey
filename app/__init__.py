@@ -7,11 +7,16 @@ from flask.ext.moment import Moment
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from config import config
-
+from elasticsearch import Elasticsearch
 db = SQLAlchemy()
 bootstrap = Bootstrap()
 moment = Moment()
 
+
+
+# you can also sniff periodically and/or after failure:
+
+es = Elasticsearch([{"host": "192.168.10.235", "port": 9200}, {"host": "192.168.10.236", "port": 9200}], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -33,7 +38,4 @@ def create_app(config_name):
     from app.main.controller.message_controller import message_blueprint
     app.register_blueprint(message_blueprint)
 
-
-
     return app
-
