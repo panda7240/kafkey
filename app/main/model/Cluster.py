@@ -13,9 +13,7 @@ class Cluster(db.Model):
     broker = db.Column(db.String(256))
     zookeeper = db.Column(db.String(256))
     remark = db.Column(db.String(256))
-    state = db.Column(db.Integer)
     create_time = db.Column(db.String(30))
-    update_time = db.Column(db.String(30))
 
     def to_dict(self):
         return {c.name: getattr(self, c.name, None) for c in self.__table__.columns}
