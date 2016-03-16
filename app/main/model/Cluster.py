@@ -18,16 +18,7 @@ class Cluster(db.Model):
     update_time = db.Column(db.String(30))
 
     def to_dict(self):
-        d = dict()
-        d["id"] = self.id
-        d["name"] = self.name
-        d["broker"] = self.broker
-        d["zookeeper"] = self.zookeeper
-        d["remark"] = self.remark
-        d["state"] = self.state
-        d["create_time"] = self.create_time
-        d["update_time"] = self.update_time
-        return d
+        return {c.name: getattr(self, c.name, None) for c in self.__table__.columns}
 
     def __repr__(self):
         return json.dumps(self.to_dict())
