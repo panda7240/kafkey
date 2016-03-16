@@ -1,12 +1,17 @@
+# -*- coding:utf-8 -*-
+import logging
+
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.moment import Moment
+
 from flask.ext.sqlalchemy import SQLAlchemy
 from config import config
 
 db = SQLAlchemy()
 bootstrap = Bootstrap()
 moment = Moment()
+
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -27,6 +32,8 @@ def create_app(config_name):
 
     from app.main.controller.message_controller import message_blueprint
     app.register_blueprint(message_blueprint)
+
+
 
     return app
 

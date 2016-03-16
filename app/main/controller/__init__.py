@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 from functools import wraps
 from flask import session, render_template
 
