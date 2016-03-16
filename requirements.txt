@@ -18,3 +18,4 @@ itsdangerous==0.23
 kazoo==2.2.1
 Flask-Login==0.3.1
 coverage==3.7.1
+elasticsearch>=2.0.0,<3.0.0

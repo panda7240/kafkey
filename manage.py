@@ -4,9 +4,9 @@
 import time
 from app import create_app, db
 from app.main.model.user import User
-from config import config
+from config import config, Config
 import os
-from flask.ext.script import Manager, Shell
+from flask.ext.script import Manager, Shell, Server
 from flask.ext.migrate import Migrate, MigrateCommand
 
 
@@ -62,9 +62,7 @@ def test(coverage=False):
         print('HTML version: file://%s/index.html' % covdir)
         COV.erase()
 
-@manager.command
-def printconfig():
-    print config[config_name].LOG_LEVEL
+
 
 
 

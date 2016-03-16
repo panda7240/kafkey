@@ -20,7 +20,7 @@
     <div data-options="region:'north'" class="heard" style="height:50px;">
         <div style="padding-left:15px;"><h2 style="color:#FFF;">Kafkey</h2></div>
         <div style="margin-top: -28px;text-align: right;">
-            <label style="font-size: 14px;margin-right: 5px;color:#FFF;"> {{ username }}</label>
+            <label style="font-size: 14px;margin-right: 5px;color:#FFF;"> {{ username }} </label>
             <a href="#" style="margin-right: 15px;font-size: 14px;color:#FFF;" onclick="logout();">退出</a>
         </div>
     </div>
@@ -39,6 +39,7 @@
                     </li>
                 </ul>
             </li>
+            {% if message_monitor_open %}
             <li>
                 <span>消息跟踪</span>
                 <ul>
@@ -52,7 +53,7 @@
                     </li>
                 </ul>
             </li>
-
+            {% endif %}
             <li>
                 <span>系统管理</span>
                 <ul>
