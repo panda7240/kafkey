@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 from functools import wraps
 from flask import session, render_template
-from sqlalchemy.dialects.postgresql import json
+import json
+
+
 
 
 def login_required(f):
