@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
 
-from app.main.controller import login_required
+from app.main.controller import login_required, json_result
 from app.main.model.cluster import Cluster
-from app.main.model.json_result import JsonResult
 from flask import render_template, Blueprint
 
 kafka_blueprint = Blueprint('kafka_blueprint', __name__)
@@ -18,4 +17,4 @@ def index():
 @login_required
 def query_simple():
     query = Cluster.query.order_by(Cluster.name.asc())
-    return str(JsonResult(query.count(), query.all()))
+    return json_result(query.count(), query.all())

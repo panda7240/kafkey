@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from functools import wraps
 from flask import session, render_template
+from sqlalchemy.dialects.postgresql import json
 
 
 def login_required(f):
@@ -10,5 +11,10 @@ def login_required(f):
         if session.get('user') is None:
             return render_template('login.html')
         return f(*args, **kwargs)
+
     return decorated_function
 
+
+# 将查询结果转化成json字符串,返回给前台页面
+def json_result(total, rows):
+    return json.dumps({'total': total, 'rows': [r.to_dict() for r in rows]})
