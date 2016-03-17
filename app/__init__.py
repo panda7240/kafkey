@@ -14,9 +14,6 @@ moment = Moment()
 
 
 
-# you can also sniff periodically and/or after failure:
-
-es = Elasticsearch([{"host": "192.168.10.235", "port": 9200}, {"host": "192.168.10.236", "port": 9200}], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -26,16 +23,21 @@ def create_app(config_name):
     db.init_app(app)
     moment.init_app(app)
 
+    global es
+    es = Elasticsearch([{"host": "192.168.10.235", "port": 9200}, {"host": "192.168.10.236", "port": 9200}], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+
     from app.main.controller.auth_controller import auth_blueprint
     app.register_blueprint(auth_blueprint)
 
     from app.main.controller.user_controller import user_blueprint
-    app.register_blueprint(user_blueprint)
+    app.register_blueprint(user_blueprint, url_prefix='/user')
 
     from app.main.controller.kafka_controller import kafka_blueprint
-    app.register_blueprint(kafka_blueprint)
+    app.register_blueprint(kafka_blueprint, url_prefix='/kafka')
 
     from app.main.controller.message_controller import message_blueprint
-    app.register_blueprint(message_blueprint)
+    app.register_blueprint(message_blueprint,url_prefix='/message')
 
     return app
+
+es = None

@@ -26,6 +26,10 @@ class Config:
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
+    estracer = logging.getLogger('elasticsearch.trace')
+    estracer.setLevel(logging.INFO)
+    estracer.addHandler(logging.FileHandler('es_trace.log'))
+
     @staticmethod
     def init_app(app):
         pass

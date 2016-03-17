@@ -6,8 +6,3 @@ from flask import render_template, session, redirect, url_for, current_app, requ
 user_blueprint = Blueprint('user_blueprint', __name__)
 
 
-@user_blueprint.route('/user/simplelist', methods=['GET', 'POST'])
-@login_required
-def query_simple():
-    query = User.query.order_by(User.name.asc())
-    return json_result(query.count(), query.all())

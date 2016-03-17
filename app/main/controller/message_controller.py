@@ -6,5 +6,9 @@ message_blueprint = Blueprint('message_blueprint', __name__)
 
 
 
+@message_blueprint.route('/index', methods=['GET', 'POST'])
+@login_required
+def index():
+    return render_template('message/index.html')
 
 
