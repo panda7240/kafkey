@@ -12,7 +12,7 @@ db = SQLAlchemy()
 bootstrap = Bootstrap()
 moment = Moment()
 
-
+es = None
 
 
 def create_app(config_name):
@@ -24,7 +24,7 @@ def create_app(config_name):
     moment.init_app(app)
 
     global es
-    es = Elasticsearch([{"host": "192.168.10.235", "port": 9200}, {"host": "192.168.10.236", "port": 9200}], sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    es = Elasticsearch(config[config_name].ES_HOSTS, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
 
     from app.main.controller.auth_controller import auth_blueprint
     app.register_blueprint(auth_blueprint)
@@ -40,4 +40,3 @@ def create_app(config_name):
 
     return app
 
-es = None

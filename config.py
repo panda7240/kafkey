@@ -10,6 +10,9 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     # 是否开启message监控
     MESSAGE_MONITOR_OPEN = True
+
+    ES_CLUSTER_NAME = 'eagleye_es'
+
     LOG_LEVEL = 'INFO'
     LOG_FILE_PATH = 'kafkey.log'
 
@@ -42,6 +45,8 @@ class DevelopmentConfig(Config):
 
     Config.logger.setLevel(logging.DEBUG)
 
+    ES_HOSTS = [{"host": "192.168.10.235", "port": 9200}, {"host": "192.168.10.236", "port": 9200}, {"host": "192.168.10.237", "port": 9200}]
+
 
 class TestingConfig(Config):
     TESTING = True
@@ -50,12 +55,16 @@ class TestingConfig(Config):
 
     Config.logger.setLevel(logging.DEBUG)
 
+    ES_HOSTS = [{"host": "192.168.10.235", "port": 9200}, {"host": "192.168.10.236", "port": 9200}, {"host": "192.168.10.237", "port": 9200}]
+
 
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 
     Config.logger.setLevel(logging.INFO)
+
+    ES_HOSTS = [{"host": "172.16.10.18", "port": 9208}, {"host": "172.16.10.19", "port": 9208}, {"host": "172.16.10.20", "port": 9208}]
 
 
 config = {

@@ -27,44 +27,35 @@
     <div data-options="region:'west',title:'菜单',split:true" style="width:180px;">
         <ul class="easyui-tree">
             <li>
-                <span>Kafka监控管理</span>
+                <span>Kafka Message监控管理</span>
                 <ul>
                     <li>
                         <a dataLink="/xxx"
-                           onclick="createIframeTabPanel(this)">Cluster管理</a>
+                           onclick="createIframeTabPanel(this)">Cluster监控</a>
                     </li>
                     <li>
                         <a dataLink="/xxx"
-                           onclick="createIframeTabPanel(this)">Topic管理</a>
+                           onclick="createIframeTabPanel(this)">Message跟踪检索</a>
+                    </li>
+                    <li>
+                        <a dataLink="/xxx"
+                           onclick="createIframeTabPanel(this)">Message统计</a>
                     </li>
                 </ul>
             </li>
             {% if message_monitor_open %}
-            <li>
-                <span>消息跟踪</span>
-                <ul>
-                    <li>
-                        <a dataLink="/xxx"
-                           onclick="createIframeTabPanel(this)">消息检索</a>
-                    </li>
-                    <li>
-                        <a dataLink="/xxx"
-                           onclick="createIframeTabPanel(this)">健康统计</a>
-                    </li>
-                </ul>
-            </li>
             {% endif %}
-            <li>
-                <span>系统管理</span>
-                <ul>
-                    <li>
-                        <a dataLink="/xxx" onclick="createTabPanel(this)">用户管理</a>
-                    </li>
-                    <li>
-                        <a dataLink="/xxx" onclick="createTabPanel(this)">日志检索</a>
-                    </li>
-                </ul>
-            </li>
+            <!--<li>-->
+                <!--<span>系统管理</span>-->
+                <!--<ul>-->
+                    <!--<li>-->
+                        <!--<a dataLink="/xxx" onclick="createTabPanel(this)">用户管理</a>-->
+                    <!--</li>-->
+                    <!--<li>-->
+                        <!--<a dataLink="/xxx" onclick="createTabPanel(this)">日志检索</a>-->
+                    <!--</li>-->
+                <!--</ul>-->
+            <!--</li>-->
         </ul>
     </div>
     <div data-options="region:'center'">
