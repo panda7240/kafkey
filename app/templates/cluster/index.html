@@ -7,6 +7,137 @@
     {{ macros.common_source() }}
 </head>
 <body>
-hello word!
+<div id="cluster_toolbar">
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true"
+       onclick="new_cluster()">添加</a>
+</div>
+<table id="cluster_dg" class="easyui-datagrid" method="post" url="/kafka/cluster/simplelist" style="width:100%;"
+       fit="true" toolbar="#cluster_toolbar" singleSelect="false" fitColumns="true" rownumbers="true"
+       sortName="name">
+    <thead>
+    <tr>
+        <th halign="center" field="name" width="15%" sortable="true">集群名称</th>
+        <th halign="center" field="remark" width="50%">备注</th>
+        <th halign="center" field="create_time" width="15%">创建时间</th>
+        <th halign="center" field="id" formatter="formatterButton" width="15%">操作</th>
+    </tr>
+    </thead>
+</table>
+
+<div id="cluster_dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton c6" iconCls="icon-ok" onclick="save_cluster()"
+       style="width:90px">保存</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#cluster_dlg').dialog('close')" style="width:90px">取消</a>
+</div>
+<div id="cluster_dlg" class="easyui-dialog" style="width:500px;height:300px;" closed="true"
+     buttons="#cluster_dlg-buttons">
+    <form id="fm" method="post" novalidate>
+        <input type="hidden" name="id">
+
+        <div class="fitem">
+            <label>集群名称:</label>
+            <input id="name_id" name="name" class="easyui-textbox" required="true">
+        </div>
+        <div class="fitem">
+            <label>broker地址:</label>
+            <input name="broker" class="easyui-textbox" required="true" multiline="true" style="height: 40px;"
+                   prompt="如:192.168.1.1:9092,192.168.1.2:9092">
+        </div>
+        <div class="fitem">
+            <label>zookeeper地址:</label>
+            <input name="zookeeper" class="easyui-textbox" required="true" multiline="true" style="height: 40px;"
+                   prompt="如:192.168.1.1:2181,192.168.1.2:2181">
+        </div>
+        <div class="fitem">
+            <label>备注:</label>
+            <input name="remark" class="easyui-textbox" width="80px;" style="height: 40px;"
+                   multiline="true">
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+    $(function () {
+        $('#cluster_dg').datagrid({
+            view: detailview,
+            detailFormatter: function (rowIndex, rowData) {
+                var res = '<table style="border: 0;font-size: 11;line-height:150%">';
+                res += '<tr><td style="border:0">broker:</td><td style="border:0">' + rowData.broker + '</td></tr>';
+                res += '<tr><td style="border:0">zookeeper:</td><td style="border:0">' + rowData.zookeeper + '</td></tr></table>';
+                return res;
+            }
+        });
+    });
+
+    function formatterButton(value, rowData, rowIndex) {
+        var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">编辑</a>';
+        str += '&nbsp;|&nbsp;<a href="#"  onclick="destroy_cluster(' + rowData.id + ')">删除</a>';
+        return str;
+    }
+
+    var url;
+    function new_cluster() {
+        $('#cluster_dlg').dialog('open').dialog('setTitle', '新增kafka集群配置');
+        $('#fm').form('clear');
+        //默认选中
+        $('#fm').form('load');
+        url = '/kafka/cluster/add';
+    }
+
+    function edit_cluster(index) {
+        var row = $('#cluster_dg').datagrid('getRows')[index];
+        $('#cluster_dlg').dialog('open').dialog('setTitle', '编辑kafka集群配置');
+        $('#fm').form('load', row);
+        url = '/kafka/cluster/update';
+    }
+
+    function save_cluster() {
+        $('#fm').form('submit', {
+            url: url,
+            onSubmit: function () {
+                return $(this).form('validate');
+            },
+            success: function (res) {
+                if (res == 'SUCCESS') {
+                    $('#cluster_dlg').dialog('close');        // close the dialog
+                    $('#cluster_dg').datagrid('reload');
+                } else {
+                    common.showCenter("错误", res);
+                }
+            }
+        });
+    }
+
+    function destroy_cluster(id) {
+        $.messager.confirm('请确认', '确认删除此集群?', function (r) {
+            if (r) {
+                $.post('/kafka/cluster/delete', {id: id}, function (res) {
+                    if (res == "SUCCESS") {
+                        $('#cluster_dg').datagrid('reload');    // reload the cluster data
+                    } else {
+                        common.showCenter("错误", res);
+                    }
+                });
+            }
+        });
+    }
+</script>
+
+<style type="text/css">
+    .fitem {
+        margin-top: 10px;
+    }
+
+    .fitem label {
+        text-align: right;
+        display: inline-block;
+        width: 100px;
+    }
+
+    .fitem input {
+        width: 300px;
+    }
+</style>
 </body>
 </html>
