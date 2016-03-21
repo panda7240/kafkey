@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import json
 import time
 from app import db
 from app.main import is_ip_port
@@ -28,12 +29,14 @@ def query_simple():
 # 获取broker的topic数量信息
 def get_zk_info(cluster):
     try:
-        zk = KazooClient(hosts=cluster.zookeeper, )
+        zk = KazooClient(hosts=cluster.zookeeper)
         zk.start()
         topics = zk.get_children('/brokers/topics/')
         brokers = zk.get_children('/brokers/ids/')
         cluster.other_dict = {'topic_num': len(topics), 'broker_num': len(brokers)}
         return cluster
+    except Exception as e:
+        print e
     finally:
         zk.stop()
         zk.close()
@@ -86,12 +89,63 @@ def add_cluster(cluster=None):
 @kafka_blueprint.route('/cluster/delete', methods=['POST', 'GET'])
 @login_required
 def delete():
-    id = request.values.get('id')
-    if id is None:
+    cluster_id = request.values.get('id')
+    if cluster_id is None:
         return 'parameter {id} exception'
-    cluster = Cluster.query.filter(Cluster.id == id).first()
+    cluster = Cluster.query.filter(Cluster.id == cluster_id).first()
     if cluster is not None:
         db.session.delete(cluster)
         return 'SUCCESS'
     else:
         return 'id not exit'
+
+
+def get_cluster(cluster_id):
+    return Cluster.query.filter(Cluster.id == cluster_id).first()
+
+
+################################################################################################################
+
+@kafka_blueprint.route('/topic/index', methods=['GET', 'POST'])
+@login_required
+def topic_index():
+    cluster_id = request.values.get('cluster_id')
+    return render_template('topic/index.html', cluster_id=cluster_id)
+
+
+@kafka_blueprint.route('/topic/list', methods=['GET', 'POST'])
+@login_required
+def topic_list():
+    cluster_id = request.values.get('cluster_id')
+    cluster = get_cluster(cluster_id)
+    try:
+        zk = KazooClient(hosts=cluster.zookeeper)
+        zk.start()
+        # 计算topic的消费者分组
+        groups = zk.get_children('/consumers/')
+        topic_dict = {}
+        for group in groups:
+            if zk.exists('/consumers/' + group + '/owners') is None:
+                break
+            group_topics = zk.get_children('/consumers/' + group + '/owners')
+            for group_topic in group_topics:
+                topic_dict[group_topic] = topic_dict.get(group_topic, 0) + 1
+
+        topics = zk.get_children('/brokers/topics/')
+        res_list = []
+        for topic in topics:
+            topic_info = zk.get('/brokers/topics/' + topic)
+            partitions = json.loads(topic_info[0])["partitions"]
+            s1 = set([])
+            for k, v in partitions.items():
+                rep_num = len(v)
+                s1 = s1 | set(v)
+            res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
+                             "broker_num": len(s1), 'group_num': topic_dict.get(topic, 0)})
+        print res_list
+        return json.dumps(res_list)
+    except Exception as e:
+        print e
+    finally:
+        zk.stop()
+        zk.close()

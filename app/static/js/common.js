@@ -225,16 +225,13 @@ var common = {
         clock += hh + ":";
         if (mm < 10) clock += '0';
         clock += mm;
-        return(clock);
+        return (clock);
     }
-
-
-
 
 
 };
 
-String.prototype.toDate = function(){
+String.prototype.toDate = function () {
     var temp = this.toString();
 
     temp = temp.replace(/-/g, "/");
@@ -242,4 +239,37 @@ String.prototype.toDate = function(){
     var date = new Date(Date.parse(temp));
 
     return date;
-} ;
+};
+
+
+createTabPanelForChildren = function (title, href) {
+
+    //获取tab
+    var iframeName = "link_iframeName";
+    var $main_tabs = parent.$('#tabs');
+    var tab = $main_tabs.tabs('getTab', title);
+    if (tab) {
+        $main_tabs.tabs('select', title);
+        iframeName += $main_tabs.tabs('getTabIndex', tab);
+        $("#" + iframeName).attr('src', href);
+        return;
+    }
+    //如果存在，激活
+    iframeName += $main_tabs.tabs('tabs').length.toString();
+    var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.8%"></iframe>';
+    //嵌入的其他链接
+    $main_tabs.tabs('add', {
+        title: title,
+        content: content,
+        closable: true,
+        tools: [
+            {
+                iconCls: 'icon-reload',
+                handler: function () {
+                    $("#" + iframeName).attr('src', href);
+                }
+            }
+        ]
+    });
+
+};
