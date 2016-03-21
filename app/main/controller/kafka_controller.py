@@ -6,6 +6,7 @@ from app.main import is_ip_port
 from app.main.controller import login_required, json_result
 from app.main.model.cluster import Cluster
 from flask import render_template, Blueprint, request
+from kazoo.client import KazooClient
 
 kafka_blueprint = Blueprint('kafka_blueprint', __name__)
 
@@ -24,9 +25,18 @@ def query_simple():
     return json_result(query.count(), rows)
 
 
+# 获取broker的topic数量信息
 def get_zk_info(cluster):
-    cluster.other_dict = {'topic_num': 5, 'broker_num': 3}
-    return cluster
+    try:
+        zk = KazooClient(hosts=cluster.zookeeper, )
+        zk.start()
+        topics = zk.get_children('/brokers/topics/')
+        brokers = zk.get_children('/brokers/ids/')
+        cluster.other_dict = {'topic_num': len(topics), 'broker_num': len(brokers)}
+        return cluster
+    finally:
+        zk.stop()
+        zk.close()
 
 
 @kafka_blueprint.route('/cluster/add', methods=['POST', 'GET'])
@@ -38,10 +48,10 @@ def add():
 @kafka_blueprint.route('/cluster/update', methods=['POST', 'GET'])
 @login_required
 def update():
-    id = request.values.get('id')
-    if id is None:
+    cluster_id = request.values.get('id')
+    if cluster_id is None:
         return 'parameter {id} exception'
-    cluster = Cluster.query.filter(Cluster.id == id).first()
+    cluster = Cluster.query.filter(Cluster.id == cluster_id).first()
     if cluster is None:
         return 'id not exit'
     else:
