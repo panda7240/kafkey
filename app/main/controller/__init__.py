@@ -4,8 +4,6 @@ from flask import session, render_template
 import json
 
 
-
-
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

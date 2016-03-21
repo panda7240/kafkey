@@ -20,7 +20,13 @@ def index():
 @login_required
 def query_simple():
     query = Cluster.query.order_by(Cluster.name.asc())
-    return json_result(query.count(), query.all())
+    rows = [get_zk_info(c) for c in query.all()]
+    return json_result(query.count(), rows)
+
+
+def get_zk_info(cluster):
+    cluster.other_dict = {'topic_num': 5, 'broker_num': 3}
+    return cluster
 
 
 @kafka_blueprint.route('/cluster/add', methods=['POST', 'GET'])
