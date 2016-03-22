@@ -5,6 +5,7 @@ import unittest
 import time
 from app import create_app
 import app
+from app.main.controller.message_controller import aggs_error_count
 
 __author__ = 'panda'
 
@@ -68,7 +69,7 @@ class MessageTestCase(unittest.TestCase):
     # 统计有哪些msg传递过程中缺失四个过程, 并显示这些msg最后一个环节的详细信息
     def test_aggs_broke_mid(self):
         res = app.es.search(
-                index="kafka_msg_log_2016.03.17",
+                index=["kafka_msg_log_2016.03.17","kafka_msg_log_2016.03.21"],
                 body={
                         "from": 0,
                         "size": 10000,
@@ -117,33 +118,15 @@ class MessageTestCase(unittest.TestCase):
         print 'count: [' + str(count) + ']'
 
 
+
+
     # 统计一天范围内所有错误的异常
     def test_aggs_error(self):
-        res = app.es.search(
-                index="kafka_msg_log_2016.03.17",
-                body={
-                        "from": 0,
-                        "size": 10000,
-                        "query": {
-                            "bool": {
-                                "must_not": {
-                                    "missing": {
-                                        "field": "etype"
-                                    }
-                                }
-                            }
-                        },
-                        "aggs" : {
-                            "error_count" : {
-                                "date_histogram" : {
-                                    "field" : "timestamp",
-                                    "interval" : "10m",
-                                    "format" : "yyyy-MM-dd HH:mm"
-                                }
-                            }
-                        }
-                    }
-                )
-        for obj in res['aggregations']['error_count']['buckets']:
-            print 'datetime: [' + obj['key_as_string'] + ']  count: [' + str(obj['doc_count']) + ']'
+        topic_name = "hahahaha_topic"
+        group_name = "group_test"
+        app_name = None
+        ip = "192.168.199.199"
+        time_scope = 40
+
+        aggs_error_count(topic_name, group_name, app_name, ip, time_scope)
 
