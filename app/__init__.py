@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import logging
 
 from flask import Flask
 from flask.ext.bootstrap import Bootstrap
@@ -8,6 +7,7 @@ from flask.ext.moment import Moment
 from flask.ext.sqlalchemy import SQLAlchemy
 from config import config
 from elasticsearch import Elasticsearch
+
 db = SQLAlchemy()
 bootstrap = Bootstrap()
 moment = Moment()
@@ -24,19 +24,23 @@ def create_app(config_name):
     moment.init_app(app)
 
     global es
-    es = Elasticsearch(config[config_name].ES_HOSTS, sniff_on_start=True, sniff_on_connection_fail=True, sniffer_timeout=60)
+    es = Elasticsearch(config[config_name].ES_HOSTS, sniff_on_start=True, sniff_on_connection_fail=True,
+                       sniffer_timeout=60)
 
     from app.main.controller.auth_controller import auth_blueprint
+
     app.register_blueprint(auth_blueprint)
 
     from app.main.controller.user_controller import user_blueprint
+
     app.register_blueprint(user_blueprint, url_prefix='/user')
 
     from app.main.controller.kafka_controller import kafka_blueprint
+
     app.register_blueprint(kafka_blueprint, url_prefix='/kafka')
 
     from app.main.controller.message_controller import message_blueprint
-    app.register_blueprint(message_blueprint,url_prefix='/message')
+
+    app.register_blueprint(message_blueprint, url_prefix='/message')
 
     return app
-
