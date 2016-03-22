@@ -41,7 +41,7 @@ def get_error_stat():
 
 
 
-# 统计一天范围内所有错误的异常
+# 统计n小时范围内所有错误的异常
 def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
     index_list = []
     # 根据检索范围获取索引名称, 并验证索引是否存在, 并生成已经存在的索引列表
@@ -54,56 +54,17 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
         return
 
     start_time = "now-" + str(time_scope) + "h/h"
-
-    must_terms = []
-    group_dict = None
-    if group_name:
-        group_dict = {
-                        "match": {
-                            "group": {
-                                "query": group_name,
-                                "type": "phrase"
-                            }
-                        }
-                    }
-        must_terms.append(group_dict)
-
-    topic_dict = None
-    if topic_name:
-        topic_dict = {
-                        "match": {
-                            "topic": {
-                                "query": topic_name,
-                                "type": "phrase"
-                            }
-                        }
-                    }
-        must_terms.append(topic_dict)
-
-    app_dict = None
-    if app_name:
-        app_dict = {
-                    "match": {
-                        "app": {
-                            "query": app_name,
-                            "type": "phrase"
+    range_dict = {
+                    "range" : {
+                        "timestamp" : {
+                            "gte" : start_time,
+                            "lte" :  "now/h"
                         }
                     }
                 }
-        must_terms.append(app_dict)
 
-    ip_dict = None
-    if ip:
-        ip_dict = {
-                    "match": {
-                        "ip": {
-                            "query": ip,
-                            "type": "phrase"
-                        }
-                    }
-                }
-        must_terms.append(ip_dict)
-
+    must_list = assemble_must_terms(topic_name, group_name, app_name, ip)
+    must_list.append(range_dict)
     res = app.es.search(
             index=index_list,
             body={
@@ -116,21 +77,88 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
                                     "field": "etype"
                                 }
                             },
-                            "must": must_terms
+                            "must": must_list
                         }
                     },
-                    "aggs" : {
-                        "error_count" : {
-                            "date_histogram" : {
-                                "field" : "timestamp",
-                                "interval" : "10m",
-                                "format" : "yyyy-MM-dd HH:mm",
-                                "min_doc_count": 0
+                    "fields": "etype",
+                    "aggregations": {
+                        "etype": {
+                            "terms": {
+                                "field": "etype",
+                                "size": 10000
+                            },
+                            "aggregations": {
+                                "aggs": {
+                                    "date_histogram" : {
+                                        "field" : "timestamp",
+                                        "interval" : "10m",
+                                        "format" : "yyyy-MM-dd HH:mm",
+                                        "min_doc_count": 0
+                                    },
+                                    "aggregations": {
+                                        "etype_count": {
+                                            "value_count": {
+                                                "field": "etype"
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             )
-    for obj in res['aggregations']['error_count']['buckets']:
-        print 'datetime: [' + obj['key_as_string'] + ']  count: [' + str(obj['doc_count']) + ']'
+    for obj in res['aggregations']['etype']['buckets']:
+        etype = obj['key']
+        etype_timestamp_aggs = obj['aggs']['buckets']
+        for etype_timestamp in etype_timestamp_aggs:
+            print 'etype:[' + str(etype) + ']  datetime: [' + etype_timestamp['key_as_string'] + ']  count: [' + str(etype_timestamp['etype_count']['value']) + ']'
 
+
+# 组装检索条件, 返回must数组
+def assemble_must_terms(topic_name, group_name, app_name, ip):
+    must_terms = []
+    if group_name:
+        group_dict = {
+                        "match": {
+                            "group": {
+                                "query": group_name,
+                                "type": "phrase"
+                            }
+                        }
+                    }
+        must_terms.append(group_dict)
+
+    if topic_name:
+        topic_dict = {
+                        "match": {
+                            "topic": {
+                                "query": topic_name,
+                                "type": "phrase"
+                            }
+                        }
+                    }
+        must_terms.append(topic_dict)
+
+    if app_name:
+        app_dict = {
+                    "match": {
+                        "app": {
+                            "query": app_name,
+                            "type": "phrase"
+                        }
+                    }
+                }
+        must_terms.append(app_dict)
+
+    if ip:
+        ip_dict = {
+                    "match": {
+                        "ip": {
+                            "query": ip,
+                            "type": "phrase"
+                        }
+                    }
+                }
+        must_terms.append(ip_dict)
+    return must_terms

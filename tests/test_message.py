@@ -126,7 +126,7 @@ class MessageTestCase(unittest.TestCase):
         group_name = "group_test"
         app_name = None
         ip = "192.168.199.199"
-        time_scope = 40
+        time_scope = 48
 
         aggs_error_count(topic_name, group_name, app_name, ip, time_scope)
 
