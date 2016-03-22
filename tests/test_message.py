@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 import json
 import unittest
+import time
 from app import create_app
 import app
 
@@ -49,7 +50,14 @@ class MessageTestCase(unittest.TestCase):
                                     }
                                 }
                             }
-                        }
+                        },
+                        "sort": [
+                            {
+                                "stage": {
+                                    "order": "asc"
+                                }
+                            }
+                        ]
                      }
                 )
         for obj in res['hits']['hits']:
@@ -57,7 +65,7 @@ class MessageTestCase(unittest.TestCase):
 
         # print("Got %d Hits" % res['hits']['total'])
 
-    # 统计有哪些msg传递过程中缺失四个过程
+    # 统计有哪些msg传递过程中缺失四个过程, 并显示这些msg最后一个环节的详细信息
     def test_aggs_broke_mid(self):
         res = app.es.search(
                 index="kafka_msg_log_2016.03.17",
@@ -81,12 +89,19 @@ class MessageTestCase(unittest.TestCase):
                                     # "min_doc_count": 3
                                 },
                                 "aggs": {
-                                    "mid_count": {
-                                        "value_count": {
-                                            "field": "mid"
+                                    "last_msg": {
+                                        "top_hits": {
+                                            "size": 1,
+                                            "sort": [
+                                                {
+                                                    "stage": {
+                                                        "order": "desc"
+                                                    }
+                                                }
+                                            ]
                                         }
                                     }
-                                }
+			                    }
                             }
                         }
                     }
@@ -95,61 +110,11 @@ class MessageTestCase(unittest.TestCase):
         for obj in res['aggregations']['mid']['buckets']:
             if obj['doc_count'] < 4 :
                 count = count + 1
-                print 'mid: [' + obj['key'] + ']  count: [' + str(obj['doc_count']) + ']'
+                last_log = obj['last_msg']['hits']['hits'][0]['_source']
+                timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(last_log['timestamp']) / 1000))
+                print 'mid: [' + last_log['mid'] + ']  count: [' + str(obj['doc_count']) + ']  time: [' + timestamp + ']  stage: [' + str(last_log['stage']) + ']'
             # print self.obj_to_json(obj)
         print 'count: [' + str(count) + ']'
-
-
-
-
-
-
-
-        # 统计有哪些msg传递过程中缺失四个过程
-    def test_aggs_broke_mid2(self):
-        res = app.es.search(
-                index="kafka_msg_log_2016.03.17",
-                body={
-                        "from": 0,
-                        "size": 10000,
-                        "query": {
-                            "bool": {
-                                "must": {
-                                    "missing": {
-                                        "field": "etype"
-                                    }
-                                }
-                            }
-                        },
-                        "aggs": {
-                            "mid": {
-                                "terms": {
-                                    "field": "mid",
-                                    "size": 10000
-                                    # "min_doc_count": 3
-                                },
-                                "aggs" : {
-                                    "total_stage" : {
-                                        "sum" : {
-                                            "field" : "stage",
-                                            "missing": 4
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                )
-        count = 0
-        for obj in res['aggregations']['mid']['buckets']:
-            count = count + 1
-            print 'mid: [' + obj['key'] + ']  count: [' + str(obj['doc_count']) + ']'
-            # print self.obj_to_json(obj)
-        print 'count: [' + str(count) + ']'
-
-
-
-
 
 
     # 统计一天范围内所有错误的异常
