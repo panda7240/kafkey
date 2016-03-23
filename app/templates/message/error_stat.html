@@ -34,9 +34,8 @@
     </div>
     <div>
         <h3 id="error_stat_charts_title" align="center" style="margin: 30px 0px 0px 0px;">异常消息统计图</h3>
-        <div id="error_stat_charts" style="height:800px"></div>
+        <div id="error_stat_charts" style="height:500px"></div>
     </div>
-<%--加载关系图--%>
 
 <script type="text/javascript">
     $(function(){
@@ -50,7 +49,7 @@
 
         var time_scope = $('#timeScope_combox').combobox('getValue');
 
-        initErrorCharts(date_time, time_scope);
+        initErrorCharts(time_scope);
     }
 
     // 生成横坐标是ip的图表
@@ -68,7 +67,7 @@
             },
             success: function (res) {
                 // 失败直接报错
-                if(!res.success){
+                if(res.success!= "true"){
                     common.showCenter("错误", "错误,请稍后再试!");
                     return;
                 }
@@ -76,20 +75,24 @@
                 // 基于准备好的dom，初始化echarts图表
                 var myChart = echarts.init(document.getElementById('error_stat_charts'));
                 myChart.setOption(generateChartOption(res));
+                var topic_name = res.topic_name;
+                var group_name = res.group_name;
+                var app_name = res.app_name;
+                var ip = res.ip;
                 var title_msg = '异常消息统计图'
-                if(topic_name){
+                if(topic_name && topic_name!="None"){
                     title_msg += (' Topic:' + topic_name);
                 }
 
-                if(group_name){
+                if(group_name && group_name!="None"){
                     title_msg += ' Group:' + group_name;
                 }
 
-                if(app_name){
+                if(app_name && app_name!="None"){
                     title_msg += ' App:' + app_name;
                 }
 
-                if(ip){
+                if(ip && ip!="None"){
                     title_msg += ' IP:' + ip;
                 }
                 $("#error_stat_charts_title").text(title_msg);
@@ -100,12 +103,12 @@
 
     // 生成echarts的option
     function generateChartOption(res){
-        var data_send_error = [];
-        var data_business_error = [];
+        var send_error_list = [];
+        var business_error_list = [];
 
         for(var i = 0; i < res.xAxis.length; i++){
-            data_send_error[i] = res.series[res.xAxis[i]].INFO;
-            data_business_error[i] = res.series[res.xAxis[i]].WARN;
+            send_error_list = res.send_error_list;
+            business_error_list = res.business_error_list;
         }
 
         option = {
@@ -116,7 +119,7 @@
                 }
             },
             legend: {
-                data: ['Send Error', 'Business Error']
+                data: ['发送异常', '业务异常']
             },
             grid: {
                 left: '3%',
@@ -137,16 +140,16 @@
             ],
             series : [
                 {
-                    name: 'send_error',
-                    type: 'bar',
-                    itemStyle: {normal: {color: 'red'}},
-                    data: data_send_error
-                },
-                {
-                    name: 'business_error',
+                    name: '发送异常',
                     type: 'bar',
                     itemStyle: {normal: {color: 'orange'}},
-                    data: data_business_error
+                    data: send_error_list
+                },
+                {
+                    name: '业务异常',
+                    type: 'bar',
+                    itemStyle: {normal: {color: 'red'}},
+                    data: business_error_list
                 }
             ]
         };
