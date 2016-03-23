@@ -20,7 +20,7 @@
         <th halign="center" field="group_name" width="30%" sortable="true">分组</th>
         <th halign="center" field="consumer" width="30%">consumer</th>
         <th halign="center" field="partition" width="8%">partition</th>
-        <th halign="center" field="button" formatter="formatterButton" width="10%">操作</th>
+        <th halign="center" field="button" formatter="formatterButton" width="10%"></th>
     </tr>
     </thead>
 </table>
@@ -38,10 +38,10 @@
     });
 
     function formatterButton(value, rowData, rowIndex) {
-        return '<a href="#" onclick="createTabPanelForChildren(\'Message统计[' + rowData.topic_name
-                + '\',\'/message/error_stat?topic_name=' + $('#topic_name').val()
+        return '<a href="#" onclick="createTabPanelForChildren(\'Message统计[' + $('#topic_name').val() + rowData.group_name
+                + ']\',\'/message/error_stat?topic_name=' + $('#topic_name').val()
                 + '&group_name=' + rowData.group_name
-                + '\')">' + value + '</a>';
+                + '\')"> Message统计信息</a>';
     }
 
 </script>

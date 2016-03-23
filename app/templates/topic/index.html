@@ -26,7 +26,7 @@
         <th halign="center" field="broker_num" width="8%">Broker数</th>
         <th halign="center" field="group_num" formatter="formatterLink" width="8%">Group数</th>
         <th halign="center" field="product_num" width="12%">生产消息数/s</th>
-        <th halign="center" field="id" formatter="formatterButton" width="10%">Message统计信息</th>
+        <th halign="center" field="id" formatter="formatterButton" width="10%"></th>
     </tr>
     </thead>
 </table>
@@ -40,8 +40,8 @@
 
     function formatterButton(value, rowData, rowIndex) {
         return '<a href="#" onclick="createTabPanelForChildren(\'Message统计[' + rowData.topic_name
-                + '\',\'/message/error_stat?topic_name=' + rowData.topic_name
-                + '\')">' + value + '</a>';
+                + ']\',\'/message/error_stat?topic_name=' + rowData.topic_name
+                + '\')">Message统计信息</a>';
     }
 
     function formatterLink(value, rowData, rowIndex) {
