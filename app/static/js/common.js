@@ -251,7 +251,7 @@ createTabPanelForChildren = function (title, href) {
     if (tab) {
         $main_tabs.tabs('select', title);
         iframeName += $main_tabs.tabs('getTabIndex', tab);
-        $("#" + iframeName).attr('src', href);
+        parent.$("#" + iframeName).attr('src', href);
         return;
     }
     //如果存在，激活
@@ -266,7 +266,7 @@ createTabPanelForChildren = function (title, href) {
             {
                 iconCls: 'icon-reload',
                 handler: function () {
-                    $("#" + iframeName).attr('src', href);
+                    parent.$("#" + iframeName).attr('src', href);
                 }
             }
         ]

@@ -118,6 +118,8 @@ def topic_index():
 def topic_list():
     cluster_id = request.values.get('cluster_id')
     cluster = get_cluster(cluster_id)
+    if cluster is None:
+        return
     try:
         zk = KazooClient(hosts=cluster.zookeeper)
         zk.start()
@@ -142,7 +144,49 @@ def topic_list():
                 s1 = s1 | set(v)
             res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
                              "broker_num": len(s1), 'group_num': topic_dict.get(topic, 0)})
-        print res_list
+        return json.dumps(res_list)
+    except Exception as e:
+        print e
+    finally:
+        zk.stop()
+        zk.close()
+
+
+################################################################################################################
+
+@kafka_blueprint.route('/group/index', methods=['GET', 'POST'])
+@login_required
+def group_index():
+    cluster_id = request.values.get('cluster_id')
+    topic_name = request.values.get('topic_name')
+    return render_template('group/index.html', topic_name=topic_name, cluster_id=cluster_id)
+
+
+@kafka_blueprint.route('/group/list', methods=['GET', 'POST'])
+@login_required
+def group_list():
+    cluster_id = request.values.get('cluster_id')
+    cluster = get_cluster(cluster_id)
+    if cluster is None:
+        raise TypeError("Invalid type for 'cluster_id' (no data)")
+    topic_name = request.values.get('topic_name')
+    try:
+        zk = KazooClient(hosts=cluster.zookeeper)
+        zk.start()
+        # 计算topic的消费者分组
+        groups = zk.get_children('/consumers/')
+        res_list = []
+        for group in groups:
+            if zk.exists('/consumers/' + group + '/owners/' + topic_name) is None:
+                continue
+            partitions = zk.get_children('/consumers/' + group + '/owners/' + topic_name)
+            p_dict = {}
+            for partition in partitions:
+                c_data = zk.get('/consumers/' + group + '/owners/' + topic_name + '/' + partition)
+                c_name = c_data[0][:c_data[0].rfind('-')]
+                p_dict[c_name] = [partition] + p_dict.get(c_name, [])
+            for k, v in p_dict.items():
+                res_list.append({"group_name": group, "consumer": k, "partition": ",".join(v)})
         return json.dumps(res_list)
     except Exception as e:
         print e

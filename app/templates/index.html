@@ -136,31 +136,31 @@
             ]
         });
     }
-    //创建普通的tab页
-    function createTabPanel(obj) {
-        var title = $(obj).text();
-        //获取tab
-        var tab = $("#tabs").tabs('getTab', title);
-        //如果存在，激活
-        if (tab) {
-            $("#tabs").tabs('select', title);
-            tab.panel('refresh', $(obj).attr("dataLink"));
-            return;
-        }
-        $('#tabs').tabs('add', {
-            title: title,
-            href: $(obj).attr("dataLink"),
-            closable: true,
-            tools: [
-                {
-                    iconCls: 'icon-reload',
-                    handler: function () {
-                        $("#tabs").tabs('getTab', title).panel('refresh');
-                    }
-                }
-            ]
-        });
-    }
+{#    //创建普通的tab页#}
+{#    function createTabPanel(obj) {#}
+{#        var title = $(obj).text();#}
+{#        //获取tab#}
+{#        var tab = $("#tabs").tabs('getTab', title);#}
+{#        //如果存在，激活#}
+{#        if (tab) {#}
+{#            $("#tabs").tabs('select', title);#}
+{#            tab.panel('refresh', $(obj).attr("dataLink"));#}
+{#            return;#}
+{#        }#}
+{#        $('#tabs').tabs('add', {#}
+{#            title: title,#}
+{#            href: $(obj).attr("dataLink"),#}
+{#            closable: true,#}
+{#            tools: [#}
+{#                {#}
+{#                    iconCls: 'icon-reload',#}
+{#                    handler: function () {#}
+{#                        $("#tabs").tabs('getTab', title).panel('refresh');#}
+{#                    }#}
+{#                }#}
+{#            ]#}
+{#        });#}
+{#    }#}
     //删除Tabs
     function closeTab(menu, type) {
         var allTabs = $("#tabs").tabs('tabs');
@@ -225,35 +225,35 @@
     {#    $('#welcomeIframe').attr("src", "/welcome.html");#}
 
 
-{#    /**#}
-{#     *子页面可用此函数创建选项卡, 给zipkin数据展示页面使用#}
-{#     **/#}
-{#    function createTabPanelForChild(title, href) {#}
-{#        var iframeName = "link_iframeName";#}
-{#        var tab = $("#tabs").tabs('getTab', title);#}
-{#        if (tab) {#}
-{#            $("#tabs").tabs('select', title);#}
-{#            iframeName += $("#tabs").tabs('getTabIndex', tab);#}
-{#            $("#" + iframeName).attr('src', href);#}
-{#            return;#}
-{#        }#}
-{#        //如果存在，激活#}
-{#        iframeName += $("#tabs").tabs('tabs').length.toString();#}
-{#        var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.8%"></iframe>';#}
-{#        //嵌入的其他链接#}
-{#        $('#tabs').tabs('add', {#}
-{#            title: title,#}
-{#            content: content,#}
-{#            closable: true,#}
-{#            tools: [#}
-{#                {#}
-{#                    iconCls: 'icon-reload',#}
-{#                    handler: function () {#}
-{#                        $("#" + iframeName).attr('src', href);#}
-{#                    }#}
-{#                }#}
-{#            ]#}
-{#        });#}
-{#    }#}
+    /**
+     *子页面可用此函数创建选项卡, 给zipkin数据展示页面使用
+     **/
+    function createTabPanelForChild(title, href) {
+        var iframeName = "link_iframeName";
+        var tab = $("#tabs").tabs('getTab', title);
+        if (tab) {
+            $("#tabs").tabs('select', title);
+            iframeName += $("#tabs").tabs('getTabIndex', tab);
+            $("#" + iframeName).attr('src', href);
+            return;
+        }
+        //如果存在，激活
+        iframeName += $("#tabs").tabs('tabs').length.toString();
+        var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.8%"></iframe>';
+        //嵌入的其他链接
+        $('#tabs').tabs('add', {
+            title: title,
+            content: content,
+            closable: true,
+            tools: [
+                {
+                    iconCls: 'icon-reload',
+                    handler: function () {
+                        $("#" + iframeName).attr('src', href);
+                    }
+                }
+            ]
+        });
+    }
 </script>
 </html>

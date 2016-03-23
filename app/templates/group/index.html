@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    {% import '/macros.html' as macros %}
+    {{ macros.common_source() }}
+</head>
+<body>
+<div id="cluster_toolbar">
+    <input type="hidden" id="topic_name" name="topic_name" value="{{ topic_name }}">
+    <input type="hidden" id="cluster_id" name="cluster_id" value="{{ cluster_id }}">
+</div>
+<table id="group_dg" method="post" style="width:100%;"
+       fit="true" toolbar="#cluster_toolbar" singleSelect="True" fitColumns="true" rownumbers="true"
+       sortName="name">
+    <thead>
+    <tr>
+        <th halign="center" field="group_name" width="30%" sortable="true">分组</th>
+        <th halign="center" field="consumer" width="30%">consumer</th>
+        <th halign="center" field="partition" width="8%">partition</th>
+        <th halign="center" field="button" formatter="formatterButton" width="10%">操作</th>
+    </tr>
+    </thead>
+</table>
+
+<script type="text/javascript" charset="utf-8">
+    $(function () {
+        $('#group_dg').datagrid({
+            queryParams: {cluster_id: $('#cluster_id').val()
+                    ,topic_name:$('#topic_name').val()},
+            url: "/kafka/group/list"
+        }).datagrid('enableFilter');
+    });
+
+    function formatterButton(value, rowData, rowIndex) {
+        var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">Message统计信息</a>';
+        return str;
+    }
+
+</script>
+</body>
+</html>
