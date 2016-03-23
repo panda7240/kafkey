@@ -122,11 +122,11 @@ class MessageTestCase(unittest.TestCase):
 
     # 统计一天范围内所有错误的异常
     def test_aggs_error(self):
-        topic_name = "hahahaha_topic"
-        group_name = "group_test"
+        topic_name = None
+        group_name = None
         app_name = None
-        ip = "192.168.199.199"
-        time_scope = 48
+        ip = None
+        time_scope = 72
 
         aggs_error_count(topic_name, group_name, app_name, ip, time_scope)
 

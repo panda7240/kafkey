@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+import json
 import time
 import app
 from app.main.controller import login_required
@@ -33,7 +34,7 @@ def get_error_stat():
     group_name = request.values.get('group_name')
     app_name = request.values.get('app_name')
     ip = request.values.get('ip')
-    return render_template('message/error_stat.html')
+    return aggs_error_count(topic_name, group_name, app_name, ip, time_scope)
 
 
 
@@ -46,7 +47,7 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
     index_list = []
     # 根据检索范围获取索引名称, 并验证索引是否存在, 并生成已经存在的索引列表
     indicesClient = IndicesClient(app.es)
-    for count in range((time_scope/24)+1):
+    for count in range((int(time_scope)/24)+1):
         index_name = 'kafka_msg_log_' + time.strftime('%Y.%m.%d', time.localtime(time.time() - int(count)*24*60*60))
         if indicesClient.exists(index_name):
             index_list.append(index_name)
@@ -63,7 +64,7 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
                     }
                 }
 
-    must_list = assemble_must_terms(topic_name, group_name, app_name, ip)
+    must_list = _assemble_must_terms(topic_name, group_name, app_name, ip)
     must_list.append(range_dict)
     res = app.es.search(
             index=index_list,
@@ -82,18 +83,20 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
                     },
                     "fields": "etype",
                     "aggregations": {
-                        "etype": {
-                            "terms": {
-                                "field": "etype",
-                                "size": 10000
+                        "aggs": {
+                            "date_histogram": {
+                                "field": "timestamp",
+                                "interval": "10m",
+                                "format": "yyyy-MM-dd HH:mm",
+                                "time_zone": "+08:00",
+                                "min_doc_count": 0
                             },
                             "aggregations": {
-                                "aggs": {
-                                    "date_histogram" : {
-                                        "field" : "timestamp",
-                                        "interval" : "10m",
-                                        "format" : "yyyy-MM-dd HH:mm",
-                                        "min_doc_count": 0
+                                "etype": {
+                                    "terms": {
+                                        "field": "etype",
+                                        "min_doc_count": 0,
+                                        "size": 10000
                                     },
                                     "aggregations": {
                                         "etype_count": {
@@ -108,17 +111,59 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
                     }
                 }
             )
-    for obj in res['aggregations']['etype']['buckets']:
-        etype = obj['key']
-        etype_timestamp_aggs = obj['aggs']['buckets']
-        for etype_timestamp in etype_timestamp_aggs:
-            print 'etype:[' + str(etype) + ']  datetime: [' + etype_timestamp['key_as_string'] + ']  count: [' + str(etype_timestamp['etype_count']['value']) + ']'
+
+    xAxis = set([])
+    error_stat_dict = {}
+    for obj in res['aggregations']['aggs']['buckets']:
+        date_time = obj['key_as_string']
+        xAxis.add(date_time)
+        # 添加横坐标列表
+        etype_count_aggs = obj['etype']['buckets']
+        for etype_count_obj in etype_count_aggs:
+            etype_count = etype_count_obj['etype_count']['value']
+            etype = etype_count_obj['key']
+
+            if date_time not in error_stat_dict:
+                error_stat_dict[date_time] = [{"etype":etype, "count":etype_count}]
+            else:
+                temp_list = error_stat_dict[date_time]
+                temp_list.append({"etype":etype, "count":etype_count})
+                error_stat_dict[date_time] = temp_list
+
+            # error_stat_result.append(error_stat_dict)
+            print 'etype:[' + str(etype) + ']  datetime: [' + date_time + ']  count: [' + str(etype_count) + ']'
+    xAxis = sorted(xAxis)
+
+    # 发送异常数据集
+    send_error_list = []
+    # 业务异常数据集
+    business_error_list = []
+    for x_date_time in xAxis:
+        temp_etype_dict_list = error_stat_dict[x_date_time]
+        if temp_etype_dict_list:
+            for etype_dict in temp_etype_dict_list:
+                if etype_dict['etype'] == 1:
+                    send_error_list.append(etype_dict['count'])
+                else:
+                    business_error_list.append(etype_dict['count'])
+
+    error_stat_result = {
+        "xAxis": xAxis,
+        "send_error_list": send_error_list,
+        "business_error_list": business_error_list,
+        "success": "true",
+        "group_name": group_name,
+        "topic_name": topic_name,
+        "app_name": app_name,
+        "ip": ip
+    }
+    return json.dumps(error_stat_result, encoding='utf8', ensure_ascii=False, indent=2)
 
 
 # 组装检索条件, 返回must数组
-def assemble_must_terms(topic_name, group_name, app_name, ip):
+def _assemble_must_terms(topic_name, group_name, app_name, ip):
     must_terms = []
-    if group_name:
+    if group_name and group_name != "None":
         group_dict = {
                         "match": {
                             "group": {
@@ -129,7 +174,7 @@ def assemble_must_terms(topic_name, group_name, app_name, ip):
                     }
         must_terms.append(group_dict)
 
-    if topic_name:
+    if topic_name and topic_name != "None":
         topic_dict = {
                         "match": {
                             "topic": {
@@ -140,7 +185,7 @@ def assemble_must_terms(topic_name, group_name, app_name, ip):
                     }
         must_terms.append(topic_dict)
 
-    if app_name:
+    if app_name and app_name != "None":
         app_dict = {
                     "match": {
                         "app": {
@@ -151,7 +196,7 @@ def assemble_must_terms(topic_name, group_name, app_name, ip):
                 }
         must_terms.append(app_dict)
 
-    if ip:
+    if ip and ip != "None":
         ip_dict = {
                     "match": {
                         "ip": {
