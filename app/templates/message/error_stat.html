@@ -1,21 +1,9 @@
 <html>
 <head>
     <title></title>
-    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/default/easyui.css">
-    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/icon.css">
-    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/color.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/common.css">
-
-    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.easyui.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/easyloader.js"></script>
-    <script type="text/javascript" src="/static/js/common.js?1.0"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-filter.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-detailview.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-easyui/locale/easyui-lang-zh_CN.js"></script>
-    <script type="text/javascript" src="/static/js/common.js?1.1"></script>
-
-    <script type="text/javascript"  src="/static/echarts/dist/echarts.js?1.0"></script>
+    {% import '/macros.html' as macros %}
+    {{ macros.common_source() }}
+    <script type="text/javascript"  src="/static/echarts/dist/echarts.js?1.1"></script>
 </head>
 <body>
     <div style="margin-left: 10px; margin-top: 10px;">
@@ -75,6 +63,14 @@
                 // 基于准备好的dom，初始化echarts图表
                 var myChart = echarts.init(document.getElementById('error_stat_charts'));
                 myChart.setOption(generateChartOption(res));
+                myChart.on('click', function (param) {
+                    var date_time = param.name;
+                    var etype = (param.seriesName == "业务异常" ? 2 : 1);
+                    var timestamp = Date.parse(new Date(date_time));
+                    var url = "/xxx";
+                    createTabPanelForChildren(date_time + "前十分钟" +param.seriesName , url);
+
+                });
                 var topic_name = res.topic_name;
                 var group_name = res.group_name;
                 var app_name = res.app_name;
@@ -156,6 +152,7 @@
 
         return option;
     }
+
 </script>
 </body>
 </html>
