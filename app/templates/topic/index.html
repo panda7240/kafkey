@@ -19,9 +19,9 @@
         <th halign="center" field="partition_num" width="8%">分区数</th>
         <th halign="center" field="rep_num" width="8%">副本数</th>
         <th halign="center" field="broker_num" width="8%">Broker数</th>
-        <th halign="center" field="group_num" width="8%">Group数</th>
+        <th halign="center" field="group_num" formatter="formatterLink" width="8%">Group数</th>
         <th halign="center" field="product_num" width="12%">生产消息数/s</th>
-        <th halign="center" field="id" formatter="formatterButton" width="8%">操作</th>
+        <th halign="center" field="id" formatter="formatterButton" width="10%">Message统计信息</th>
     </tr>
     </thead>
 </table>
@@ -38,6 +38,13 @@
         var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">编辑</a>';
         str += '&nbsp;|&nbsp;<a href="#"  onclick="destroy_cluster(' + rowData.id + ')">删除</a>';
         return str;
+    }
+
+    function formatterLink(value, rowData, rowIndex) {
+        return '<a href="#" onclick="createTabPanelForChildren(\'' + rowData.topic_name
+                + '\',\'/kafka/group/index?cluster_id=' + $('#cluster_id').val()
+                + '&topic_name=' + rowData.topic_name
+                + '\')">' + value + '</a>';
     }
 </script>
 </body>
