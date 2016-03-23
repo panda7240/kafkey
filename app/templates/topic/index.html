@@ -39,14 +39,16 @@
     });
 
     function formatterButton(value, rowData, rowIndex) {
-        var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">Message统计信息</a>';
-        return str;
+        return '<a href="#" onclick="createTabPanelForChildren(\'Message统计[' + rowData.topic_name
+                + '\',\'/message/error_stat?topic_name=' + rowData.topic_name
+                + '\')">' + value + '</a>';
     }
 
     function formatterLink(value, rowData, rowIndex) {
         return '<a href="#" onclick="createTabPanelForChildren(\'' + rowData.topic_name
                 + '\',\'/kafka/group/index?cluster_id=' + $('#cluster_id').val()
                 + '&topic_name=' + rowData.topic_name
+                + '&groups_str=' + rowData.groups_str
                 + '\')">' + value + '</a>';
     }
     function doSearch(value) {

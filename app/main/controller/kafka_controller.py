@@ -123,7 +123,7 @@ def topic_list():
     cluster_id = request.values.get('cluster_id')
     page = int(request.values.get('page'))
     rows = int(request.values.get('rows'))
-    sSearch = request.values.get('sSearch')
+    search_str = request.values.get('sSearch')
     cluster = get_cluster(cluster_id)
     if cluster is None:
         raise TypeError("Invalid type for 'cluster_id' (no data)")
@@ -132,11 +132,10 @@ def topic_list():
     topic_groups = {}
     for group in groups:
         if zk_client(cluster).exists('/consumers/' + group + '/owners') is None:
-            break
+            continue
         g_topics = zk_client(cluster).get_children('/consumers/' + group + '/owners')
         for g_topic in g_topics:
             topic_groups[g_topic] = topic_groups.get(g_topic, []) + [group]
-
     topics = zk_client(cluster).get_children('/brokers/topics/')
     res_list = []
     for topic in topics:
@@ -147,12 +146,12 @@ def topic_list():
             rep_num = len(v)
             s1 = s1 | set(v)
         groups = topic_groups.get(topic, [])
-        if sSearch is None:
+        if search_str is None:
             res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
-                             "broker_num": len(s1), 'group_num': len(groups), 'group_list': ','.join(groups)})
-        elif topic.find(sSearch) > -1:
+                             "broker_num": len(s1), 'group_num': len(groups), 'groups_str': ','.join(groups)})
+        elif topic.find(search_str) > -1:
             res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
-                             "broker_num": len(s1), 'group_num': len(groups), 'group_list': ','.join(groups)})
+                             "broker_num": len(s1), 'group_num': len(groups), 'groups_str': ','.join(groups)})
     start = (page - 1) * rows
     return json_result(len(res_list), res_list[start:min(start + rows, len(res_list))])
 
@@ -164,21 +163,21 @@ def topic_list():
 def group_index():
     cluster_id = request.values.get('cluster_id')
     topic_name = request.values.get('topic_name')
-    return render_template('group/index.html', topic_name=topic_name, cluster_id=cluster_id)
+    groups_str = request.values.get('groups_str')
+    return render_template('group/index.html', topic_name=topic_name, cluster_id=cluster_id, groups_str=groups_str)
 
 
 @kafka_blueprint.route('/group/list', methods=['GET', 'POST'])
 @login_required
 def group_list():
     cluster_id = request.values.get('cluster_id')
+    groups_str = request.values.get('groups_str')
     cluster = get_cluster(cluster_id)
     if cluster is None:
         raise TypeError("Invalid type for 'cluster_id' (no data)")
     topic_name = request.values.get('topic_name')
-    # 计算topic的消费者分组
-    groups = zk_client(cluster).get_children('/consumers/')
     res_list = []
-    for group in groups:
+    for group in groups_str.split(','):
         if zk_client(cluster).exists('/consumers/' + group + '/owners/' + topic_name) is None:
             continue
         partitions = zk_client(cluster).get_children('/consumers/' + group + '/owners/' + topic_name)

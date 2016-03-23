@@ -10,6 +10,7 @@
 <div id="cluster_toolbar">
     <input type="hidden" id="topic_name" name="topic_name" value="{{ topic_name }}">
     <input type="hidden" id="cluster_id" name="cluster_id" value="{{ cluster_id }}">
+    <input type="hidden" id="groups_str" name="cluster_id" value="{{ groups_str }}">
 </div>
 <table id="group_dg" method="post" style="width:100%;"
        fit="true" toolbar="#cluster_toolbar" singleSelect="True" fitColumns="true" rownumbers="true"
@@ -27,15 +28,20 @@
 <script type="text/javascript" charset="utf-8">
     $(function () {
         $('#group_dg').datagrid({
-            queryParams: {cluster_id: $('#cluster_id').val()
-                    ,topic_name:$('#topic_name').val()},
+            queryParams: {
+                cluster_id: $('#cluster_id').val(),
+                topic_name: $('#topic_name').val(),
+                groups_str: $('#groups_str').val()
+            },
             url: "/kafka/group/list"
         }).datagrid('enableFilter');
     });
 
     function formatterButton(value, rowData, rowIndex) {
-        var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">Message统计信息</a>';
-        return str;
+        return '<a href="#" onclick="createTabPanelForChildren(\'Message统计[' + rowData.topic_name
+                + '\',\'/message/error_stat?topic_name=' + $('#topic_name').val()
+                + '&group_name=' + rowData.group_name
+                + '\')">' + value + '</a>';
     }
 
 </script>
