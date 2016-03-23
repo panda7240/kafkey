@@ -11,6 +11,18 @@ from kazoo.client import KazooClient
 
 kafka_blueprint = Blueprint('kafka_blueprint', __name__)
 
+zk_dict = {}
+
+
+def zk_client(cluster):
+    zk = zk_dict.get(cluster.id)
+    if zk is None:
+        zk = KazooClient(hosts=cluster.zookeeper)
+        zk_dict[cluster.id] = zk
+    if 'CLOSED' == zk.client_state:
+        zk.start()
+    return zk
+
 
 @kafka_blueprint.route('/cluster/index', methods=['GET', 'POST'])
 @login_required
@@ -28,18 +40,10 @@ def query_simple():
 
 # 获取broker的topic数量信息
 def get_zk_info(cluster):
-    try:
-        zk = KazooClient(hosts=cluster.zookeeper)
-        zk.start()
-        topics = zk.get_children('/brokers/topics/')
-        brokers = zk.get_children('/brokers/ids/')
-        cluster.other_dict = {'topic_num': len(topics), 'broker_num': len(brokers)}
-        return cluster
-    except Exception as e:
-        print e
-    finally:
-        zk.stop()
-        zk.close()
+    topics = zk_client(cluster).get_children('/brokers/topics/')
+    brokers = zk_client(cluster).get_children('/brokers/ids/')
+    cluster.other_dict = {'topic_num': len(topics), 'broker_num': len(brokers)}
+    return cluster
 
 
 @kafka_blueprint.route('/cluster/add', methods=['POST', 'GET'])
@@ -117,39 +121,40 @@ def topic_index():
 @login_required
 def topic_list():
     cluster_id = request.values.get('cluster_id')
+    page = int(request.values.get('page'))
+    rows = int(request.values.get('rows'))
+    sSearch = request.values.get('sSearch')
     cluster = get_cluster(cluster_id)
     if cluster is None:
-        return
-    try:
-        zk = KazooClient(hosts=cluster.zookeeper)
-        zk.start()
-        # 计算topic的消费者分组
-        groups = zk.get_children('/consumers/')
-        topic_dict = {}
-        for group in groups:
-            if zk.exists('/consumers/' + group + '/owners') is None:
-                break
-            group_topics = zk.get_children('/consumers/' + group + '/owners')
-            for group_topic in group_topics:
-                topic_dict[group_topic] = topic_dict.get(group_topic, 0) + 1
+        raise TypeError("Invalid type for 'cluster_id' (no data)")
+    # 计算topic的消费者分组
+    groups = zk_client(cluster).get_children('/consumers/')
+    topic_groups = {}
+    for group in groups:
+        if zk_client(cluster).exists('/consumers/' + group + '/owners') is None:
+            break
+        g_topics = zk_client(cluster).get_children('/consumers/' + group + '/owners')
+        for g_topic in g_topics:
+            topic_groups[g_topic] = topic_groups.get(g_topic, []) + [group]
 
-        topics = zk.get_children('/brokers/topics/')
-        res_list = []
-        for topic in topics:
-            topic_info = zk.get('/brokers/topics/' + topic)
-            partitions = json.loads(topic_info[0])["partitions"]
-            s1 = set([])
-            for k, v in partitions.items():
-                rep_num = len(v)
-                s1 = s1 | set(v)
+    topics = zk_client(cluster).get_children('/brokers/topics/')
+    res_list = []
+    for topic in topics:
+        topic_info = zk_client(cluster).get('/brokers/topics/' + topic)
+        partitions = json.loads(topic_info[0])["partitions"]
+        s1 = set([])
+        for k, v in partitions.items():
+            rep_num = len(v)
+            s1 = s1 | set(v)
+        groups = topic_groups.get(topic, [])
+        if sSearch is None:
             res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
-                             "broker_num": len(s1), 'group_num': topic_dict.get(topic, 0)})
-        return json.dumps(res_list)
-    except Exception as e:
-        print e
-    finally:
-        zk.stop()
-        zk.close()
+                             "broker_num": len(s1), 'group_num': len(groups), 'group_list': ','.join(groups)})
+        elif topic.find(sSearch) > -1:
+            res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
+                             "broker_num": len(s1), 'group_num': len(groups), 'group_list': ','.join(groups)})
+    start = (page - 1) * rows
+    return json_result(len(res_list), res_list[start:min(start + rows, len(res_list))])
 
 
 ################################################################################################################
@@ -170,26 +175,18 @@ def group_list():
     if cluster is None:
         raise TypeError("Invalid type for 'cluster_id' (no data)")
     topic_name = request.values.get('topic_name')
-    try:
-        zk = KazooClient(hosts=cluster.zookeeper)
-        zk.start()
-        # 计算topic的消费者分组
-        groups = zk.get_children('/consumers/')
-        res_list = []
-        for group in groups:
-            if zk.exists('/consumers/' + group + '/owners/' + topic_name) is None:
-                continue
-            partitions = zk.get_children('/consumers/' + group + '/owners/' + topic_name)
-            p_dict = {}
-            for partition in partitions:
-                c_data = zk.get('/consumers/' + group + '/owners/' + topic_name + '/' + partition)
-                c_name = c_data[0][:c_data[0].rfind('-')]
-                p_dict[c_name] = [partition] + p_dict.get(c_name, [])
-            for k, v in p_dict.items():
-                res_list.append({"group_name": group, "consumer": k, "partition": ",".join(v)})
-        return json.dumps(res_list)
-    except Exception as e:
-        print e
-    finally:
-        zk.stop()
-        zk.close()
+    # 计算topic的消费者分组
+    groups = zk_client(cluster).get_children('/consumers/')
+    res_list = []
+    for group in groups:
+        if zk_client(cluster).exists('/consumers/' + group + '/owners/' + topic_name) is None:
+            continue
+        partitions = zk_client(cluster).get_children('/consumers/' + group + '/owners/' + topic_name)
+        p_dict = {}
+        for partition in partitions:
+            c_data = zk_client(cluster).get('/consumers/' + group + '/owners/' + topic_name + '/' + partition)
+            c_name = c_data[0][:c_data[0].rfind('-')]
+            p_dict[c_name] = [partition] + p_dict.get(c_name, [])
+        for k, v in p_dict.items():
+            res_list.append({"group_name": group, "consumer": k, "partition": ",".join(v)})
+    return json.dumps(res_list)

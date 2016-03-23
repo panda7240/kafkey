@@ -9,10 +9,15 @@
 <body>
 <div id="cluster_toolbar">
     <input type="hidden" id="cluster_id" name="cluster_id" value="{{ cluster_id }}">
+
+    <div style="margin-left: 25px">
+        <input class="easyui-searchbox" data-options="searcher:doSearch" style="width:200px">
+    </div>
 </div>
-<table id="topic_dg" method="post" style="width:100%;"
-       fit="true" toolbar="#cluster_toolbar" singleSelect="True" fitColumns="true" rownumbers="true"
-       sortName="name">
+<table id="topic_dg" method="post" style="width:100%;" url="/kafka/topic/list"
+       fit="true"
+       toolbar="#cluster_toolbar" singleSelect="True" fitColumns="true" rownumbers="true"
+       sortName="name" pagination="true" pageSize="30">
     <thead>
     <tr>
         <th halign="center" field="topic_name" width="40%" sortable="true">topic名字</th>
@@ -29,14 +34,12 @@
 <script type="text/javascript" charset="utf-8">
     $(function () {
         $('#topic_dg').datagrid({
-            queryParams: {cluster_id: $('#cluster_id').val()},
-            url: "/kafka/topic/list"
-        }).datagrid('enableFilter');
+            queryParams: {cluster_id: $('#cluster_id').val()}
+        });
     });
 
     function formatterButton(value, rowData, rowIndex) {
-        var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">编辑</a>';
-        str += '&nbsp;|&nbsp;<a href="#"  onclick="destroy_cluster(' + rowData.id + ')">删除</a>';
+        var str = '<a href="#" onclick="edit_cluster(' + rowIndex + ')">Message统计信息</a>';
         return str;
     }
 
@@ -45,6 +48,9 @@
                 + '\',\'/kafka/group/index?cluster_id=' + $('#cluster_id').val()
                 + '&topic_name=' + rowData.topic_name
                 + '\')">' + value + '</a>';
+    }
+    function doSearch(value) {
+        $('#topic_dg').datagrid('reload', {cluster_id: $('#cluster_id').val(), sSearch: value});
     }
 </script>
 </body>
