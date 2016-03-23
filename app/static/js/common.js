@@ -256,7 +256,7 @@ createTabPanelForChildren = function (title, href) {
     }
     //如果存在，激活
     iframeName += $main_tabs.tabs('tabs').length.toString();
-    var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.8%"></iframe>';
+    var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.5%"></iframe>';
     //嵌入的其他链接
     $main_tabs.tabs('add', {
         title: title,

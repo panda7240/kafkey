@@ -17,4 +17,7 @@ def login_required(f):
 
 # 将查询结果转化成json字符串,返回给前台页面
 def json_result(total, rows):
-    return json.dumps({'total': total, 'rows': [r.to_dict() for r in rows]})
+    if isinstance(rows[0], dict):
+        return json.dumps({'total': total, 'rows': rows})
+    else:
+        return json.dumps({'total': total, 'rows': [r.to_dict() for r in rows]})
