@@ -1,0 +1,158 @@
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="/static/js/jquery-easyui/themes/color.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/common.css">
+
+    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/easyloader.js"></script>
+    <script type="text/javascript" src="/static/js/common.js?1.0"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-filter.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/extension/datagrid-detailview.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-easyui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/static/js/common.js?1.1"></script>
+
+    <script type="text/javascript"  src="/static/echarts/dist/echarts.js?1.0"></script>
+</head>
+<body>
+    <div style="margin-left: 10px; margin-top: 10px;">
+        当前时间往前
+        <select id="timeScope_combox" class="easyui-combobox" panelHeight="auto" style="width: 100px;">
+            <option value="1">1小时</option>
+            <option value="2">2小时</option>
+            <option value="3">3小时</option>
+            <option value="6">6小时</option>
+            <option value="12">12小时</option>
+            <option value="24">24小时</option>
+            <option value="72">3天</option>
+            <option value="168">7天</option>
+        </select>
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" onclick="initCharts();" style="width:70px">确定</a>
+    </div>
+    <div>
+        <h3 id="error_stat_charts_title" align="center" style="margin: 30px 0px 0px 0px;">异常消息统计图</h3>
+        <div id="error_stat_charts" style="height:800px"></div>
+    </div>
+<%--加载关系图--%>
+
+<script type="text/javascript">
+    $(function(){
+        $("#timeScope_combox").combobox();
+
+        initCharts();
+    });
+
+    // 生成图表
+    function initCharts(){
+
+        var time_scope = $('#timeScope_combox').combobox('getValue');
+
+        initErrorCharts(date_time, time_scope);
+    }
+
+    // 生成横坐标是ip的图表
+    function initErrorCharts(time_scope){
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: '/message/get_error_stat',
+            data: {
+                time_scope: time_scope,
+                topic_name: '{{topic_name}}',
+                group_name: '{{group_name}}',
+                app_name: '{{app_name}}',
+                ip: '{{ip}}'
+            },
+            success: function (res) {
+                // 失败直接报错
+                if(!res.success){
+                    common.showCenter("错误", "错误,请稍后再试!");
+                    return;
+                }
+
+                // 基于准备好的dom，初始化echarts图表
+                var myChart = echarts.init(document.getElementById('error_stat_charts'));
+                myChart.setOption(generateChartOption(res));
+                var title_msg = '异常消息统计图'
+                if(topic_name){
+                    title_msg += (' Topic:' + topic_name);
+                }
+
+                if(group_name){
+                    title_msg += ' Group:' + group_name;
+                }
+
+                if(app_name){
+                    title_msg += ' App:' + app_name;
+                }
+
+                if(ip){
+                    title_msg += ' IP:' + ip;
+                }
+                $("#error_stat_charts_title").text(title_msg);
+            },
+            dataType: 'json'
+        });
+    }
+
+    // 生成echarts的option
+    function generateChartOption(res){
+        var data_send_error = [];
+        var data_business_error = [];
+
+        for(var i = 0; i < res.xAxis.length; i++){
+            data_send_error[i] = res.series[res.xAxis[i]].INFO;
+            data_business_error[i] = res.series[res.xAxis[i]].WARN;
+        }
+
+        option = {
+            tooltip : {
+                trigger: 'axis',
+                axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                    type : 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+                }
+            },
+            legend: {
+                data: ['Send Error', 'Business Error']
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis : [
+                {
+                    type : 'category',
+                    data : res.xAxis
+                }
+            ],
+            yAxis : [
+                {
+                    type : 'value'
+                }
+            ],
+            series : [
+                {
+                    name: 'send_error',
+                    type: 'bar',
+                    itemStyle: {normal: {color: 'red'}},
+                    data: data_send_error
+                },
+                {
+                    name: 'business_error',
+                    type: 'bar',
+                    itemStyle: {normal: {color: 'orange'}},
+                    data: data_business_error
+                }
+            ]
+        };
+
+        return option;
+    }
+</script>
+</body>
+</html>
