@@ -77,3 +77,10 @@ class TopicValue(object):
 
     def topic_watch(self, data, stat):
         self.topic_value = json.loads(data)["partitions"]
+
+
+if __name__ == '__main__':
+    zk_test = KazooClient(hosts='192.168.5.159:2181,192.168.5.159:2182,192.168.5.159:2183')
+    zk_test.start()
+    tops = zk_test.get_children('/brokers/topics/')
+    print len(tops)
