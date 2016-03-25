@@ -8,6 +8,7 @@ from app.main.controller import login_required, json_result
 from app.main.model.cluster import Cluster
 from app.main.model.cluster_zookeeper import ClusterZookeeper
 from flask import render_template, Blueprint, request
+from kazoo.handlers.threading import KazooTimeoutError
 
 kafka_blueprint = Blueprint('kafka_blueprint', __name__)
 
@@ -17,8 +18,21 @@ zk_dict = {}
 @kafka_blueprint.before_app_first_request
 def run_on_start():
     clusters = Cluster.query.all()
-    for cluster in [cluster for cluster in clusters if cluster.id not in zk_dict.keys()]:
+    map(start_watch, clusters)
+
+
+def start_watch(cluster):
+    if cluster.id in zk_dict:
+        return 'SUCCESS'
+    try:
         zk_dict[cluster.id] = ClusterZookeeper(cluster.zookeeper)
+        return 'SUCCESS'
+    except KazooTimeoutError as e:
+        print e
+        return e
+    except ValueError as e:
+        print e
+        return e
 
 
 @kafka_blueprint.route('/cluster/index', methods=['GET', 'POST'])
@@ -75,7 +89,7 @@ def add(cluster=None):
         return 'parameter {zookeeper} illegal'
     if cluster is None:
         cluster = Cluster(create_time=time.strftime('%Y-%m-%d %X', time.localtime()))
-    elif zookeeper != cluster.zookeeper:
+    elif zookeeper != cluster.zookeeper and cluster.id in zk_dict:
         zk_dict[cluster.id].close_zk()
         zk_dict.pop(cluster.id)
     cluster.name = name
@@ -83,8 +97,11 @@ def add(cluster=None):
     cluster.zookeeper = zookeeper
     cluster.remark = remark
     db.session.add(cluster)
-    db.session.commit()
-    run_on_start()
+    db.session.flush()
+    res = start_watch(cluster)
+    if res != 'SUCCESS':
+        db.session.rollback()
+        return res
     return 'SUCCESS'
 
 
@@ -95,9 +112,10 @@ def delete():
     if cluster_id is None:
         return 'parameter {id} exception'
     cluster = Cluster.query.filter(Cluster.id == cluster_id).first()
-    if cluster is not None:
+    if cluster.id in zk_dict[cluster.id]:
         zk_dict[cluster.id].close_zk()
         zk_dict.pop(cluster.id)
+    if cluster is not None:
         db.session.delete(cluster)
         return 'SUCCESS'
     else:

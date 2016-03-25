@@ -12,17 +12,17 @@ class ClusterZookeeper(object):
         self.groups_dict = {}
         self.topics_dict = {}
         self.brokers_list = []
+        self.zk = KazooClient(hosts=zookeeper_hosts)
         try:
-            self.zk = KazooClient(hosts=zookeeper_hosts)
             self.zk.add_listener(self.keep_start)
             self.zk.start()
             if self.zk.exists('/consumers') is None or self.zk.exists('/brokers') is None:
-                raise LookupError(zookeeper_hosts + 'is not zookeeper of kafka')
+                raise ValueError(zookeeper_hosts + 'is not zookeeper of kafka')
             ChildrenWatch(self.zk, '/consumers', self.groups_watch)
             ChildrenWatch(self.zk, '/brokers/topics', self.topics_watch)
             ChildrenWatch(self.zk, '/brokers/ids/', self.brokers_watch)
-        except KazooTimeoutError, e:
-            pass
+        except KazooTimeoutError as e:
+            raise KazooTimeoutError(zookeeper_hosts + ':' + e.message)
 
     # 保证链接是可用的
     def keep_start(self, client_status):

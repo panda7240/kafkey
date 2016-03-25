@@ -45,6 +45,7 @@
             <label>broker地址:</label>
             <input name="broker" class="easyui-textbox" required="true" multiline="true" style="height: 40px;"
                    prompt="如:192.168.1.1:9092,192.168.1.2:9092">
+
         </div>
         <div class="fitem">
             <label>zookeeper地址:</label>
@@ -80,8 +81,9 @@
     }
 
     function formatterLink(value, rowData, rowIndex) {
-        return '<a href="#" onclick="createTabPanelForChildren(\'' + rowData.name
-                + '\',\'/kafka/topic/index?cluster_id=' + rowData.id + '\')">' + value + '</a>';
+        return value ? '<a href="#" onclick="createTabPanelForChildren(\'' + rowData.name
+        + '\',\'/kafka/topic/index?cluster_id=' + rowData.id + '\')">' + value + '</a>'
+                : '<span style="color: red; ">zk地址错误 </span>';
     }
 
     var url;
