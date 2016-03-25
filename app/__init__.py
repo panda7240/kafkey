@@ -24,8 +24,8 @@ def create_app(config_name):
     moment.init_app(app)
 
     global es
-    es = Elasticsearch(config[config_name].ES_HOSTS, sniff_on_start=True, sniff_on_connection_fail=True,
-                       sniffer_timeout=60)
+    if es is None:
+        es = Elasticsearch(config[config_name].ES_HOSTS,sniffer_timeout=60)
 
     from app.main.controller.auth_controller import auth_blueprint
 

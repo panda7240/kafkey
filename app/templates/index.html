@@ -64,8 +64,7 @@
 				{iconCls:'icon-reload',	handler:function(){
 				    window.frames['welcomeIframe'].location.reload(true)
 				}}]">
-                <input class="easyui-searchbox" data-options="searcher:doSearch" style="width:200px">
-                <iframe id="welcomeIframe" name="welcomeIframe" src="" frameborder="0"
+                <iframe id="welcomeIframe" name="welcomeIframe" src="/message/error_stat?time_scope=72" frameborder="0"
                         width="100%" height="97%">
                 </iframe>
             </div>
@@ -136,31 +135,6 @@
             ]
         });
     }
-{#    //创建普通的tab页#}
-{#    function createTabPanel(obj) {#}
-{#        var title = $(obj).text();#}
-{#        //获取tab#}
-{#        var tab = $("#tabs").tabs('getTab', title);#}
-{#        //如果存在，激活#}
-{#        if (tab) {#}
-{#            $("#tabs").tabs('select', title);#}
-{#            tab.panel('refresh', $(obj).attr("dataLink"));#}
-{#            return;#}
-{#        }#}
-{#        $('#tabs').tabs('add', {#}
-{#            title: title,#}
-{#            href: $(obj).attr("dataLink"),#}
-{#            closable: true,#}
-{#            tools: [#}
-{#                {#}
-{#                    iconCls: 'icon-reload',#}
-{#                    handler: function () {#}
-{#                        $("#tabs").tabs('getTab', title).panel('refresh');#}
-{#                    }#}
-{#                }#}
-{#            ]#}
-{#        });#}
-{#    }#}
     //删除Tabs
     function closeTab(menu, type) {
         var allTabs = $("#tabs").tabs('tabs');
