@@ -22,17 +22,13 @@ def run_on_start():
 
 
 def start_watch(cluster):
-    if cluster.id in zk_dict:
-        return 'SUCCESS'
     try:
         zk_dict[cluster.id] = ClusterZookeeper(cluster.zookeeper)
         return 'SUCCESS'
     except KazooTimeoutError as e:
-        print e
-        return e
+        return cluster.zookeeper + e.message
     except ValueError as e:
-        print e
-        return e
+        return e.message
 
 
 @kafka_blueprint.route('/cluster/index', methods=['GET', 'POST'])
@@ -87,21 +83,23 @@ def add(cluster=None):
         return 'parameter {broker} illegal'
     if False in map(is_ip_port, zookeeper.split(',')):
         return 'parameter {zookeeper} illegal'
+    must_re_watch = False
     if cluster is None:
         cluster = Cluster(create_time=time.strftime('%Y-%m-%d %X', time.localtime()))
-    elif zookeeper != cluster.zookeeper and cluster.id in zk_dict:
-        zk_dict[cluster.id].close_zk()
-        zk_dict.pop(cluster.id)
+        must_re_watch = True
+    elif zookeeper != cluster.zookeeper:
+        must_re_watch = True
     cluster.name = name
     cluster.broker = broker
     cluster.zookeeper = zookeeper
     cluster.remark = remark
     db.session.add(cluster)
-    db.session.flush()
-    res = start_watch(cluster)
-    if res != 'SUCCESS':
-        db.session.rollback()
-        return res
+    if must_re_watch:
+        db.session.flush()
+        res = start_watch(cluster)
+        if res != 'SUCCESS':
+            db.session.rollback()
+            return res
     return 'SUCCESS'
 
 
@@ -112,10 +110,10 @@ def delete():
     if cluster_id is None:
         return 'parameter {id} exception'
     cluster = Cluster.query.filter(Cluster.id == cluster_id).first()
-    if cluster.id in zk_dict[cluster.id]:
-        zk_dict[cluster.id].close_zk()
-        zk_dict.pop(cluster.id)
     if cluster is not None:
+        if cluster.id in zk_dict:
+            zk_dict[cluster.id].close_zk()
+            zk_dict.pop(cluster.id)
         db.session.delete(cluster)
         return 'SUCCESS'
     else:

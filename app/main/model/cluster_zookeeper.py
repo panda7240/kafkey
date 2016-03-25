@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 from flask import json
 from kazoo.client import KazooClient
-from kazoo.handlers.threading import KazooTimeoutError
 from kazoo.recipe.watchers import ChildrenWatch, DataWatch
 
 __author__ = 'ylq'
@@ -13,16 +12,13 @@ class ClusterZookeeper(object):
         self.topics_dict = {}
         self.brokers_list = []
         self.zk = KazooClient(hosts=zookeeper_hosts)
-        try:
-            self.zk.add_listener(self.keep_start)
-            self.zk.start()
-            if self.zk.exists('/consumers') is None or self.zk.exists('/brokers') is None:
-                raise ValueError(zookeeper_hosts + 'is not zookeeper of kafka')
-            ChildrenWatch(self.zk, '/consumers', self.groups_watch)
-            ChildrenWatch(self.zk, '/brokers/topics', self.topics_watch)
-            ChildrenWatch(self.zk, '/brokers/ids/', self.brokers_watch)
-        except KazooTimeoutError as e:
-            raise KazooTimeoutError(zookeeper_hosts + ':' + e.message)
+        self.zk.add_listener(self.keep_start)
+        self.zk.start()
+        if self.zk.exists('/consumers') is None or self.zk.exists('/brokers') is None:
+            raise ValueError(zookeeper_hosts + 'is not zookeeper of kafka')
+        ChildrenWatch(self.zk, '/consumers', self.groups_watch)
+        ChildrenWatch(self.zk, '/brokers/topics', self.topics_watch)
+        ChildrenWatch(self.zk, '/brokers/ids/', self.brokers_watch)
 
     # 保证链接是可用的
     def keep_start(self, client_status):
