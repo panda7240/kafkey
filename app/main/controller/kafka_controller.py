@@ -146,22 +146,16 @@ def topic_list():
     # 计算topic的消费者分组
     topic_groups = get_topic_groups(cluster.id)
     topics_dict = zk_dict[cluster.id].topics_dict
-    res_list = []
-    for topic, value in topics_dict.items():
-        partitions = value.topic_value
-        s1 = set([])
-        for k, v in partitions.items():
-            rep_num = len(v)
-            s1 = s1 | set(v)
-        groups = topic_groups.get(topic, [])
-        if search_str is None:
-            res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
-                             "broker_num": len(s1), 'group_num': len(groups), 'groups_str': ','.join(groups)})
-        elif topic.find(search_str) > -1:
-            res_list.append({"topic_name": topic, "partition_num": len(partitions), "rep_num": rep_num,
-                             "broker_num": len(s1), 'group_num': len(groups), 'groups_str': ','.join(groups)})
+    res_list = [create_topic_dict(topic, value.topic_value, topic_groups.get(topic, [])) for topic, value in
+                topics_dict.items() if search_str is None or topic.lower().find(search_str.lower()) > -1]
     start = (page - 1) * rows
     return json_result(len(res_list), res_list[start:min(start + rows, len(res_list))])
+
+
+def create_topic_dict(topic, partitions, groups):
+    broker_set = reduce(lambda x, y: x | set(y), partitions.values(), set([]))
+    return {"topic_name": topic, "partition_num": len(partitions), "rep_num": len(partitions.values()[0]),
+            "broker_num": len(broker_set), 'group_num': len(groups), 'groups_str': ','.join(groups)}
 
 
 def get_topic_groups(cluster_id):
@@ -204,6 +198,5 @@ def group_list():
             c_data = zk_dict[cluster.id].zk.get('/consumers/' + group + '/owners/' + topic_name + '/' + partition)
             c_name = c_data[0][:c_data[0].rfind('-')]
             p_dict[c_name] = [partition] + p_dict.get(c_name, [])
-        for k, v in p_dict.items():
-            res_list.append({"group_name": group, "consumer": k, "partition": ",".join(v)})
+        res_list.extend([{"group_name": group, "consumer": k, "partition": ",".join(v)} for k, v in p_dict.items()])
     return json.dumps(res_list)
