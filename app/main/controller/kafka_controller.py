@@ -6,22 +6,19 @@ from app.main import is_ip_port
 
 from app.main.controller import login_required, json_result
 from app.main.model.cluster import Cluster
+from app.main.model.cluster_zookeeper import ClusterZookeeper
 from flask import render_template, Blueprint, request
-from kazoo.client import KazooClient
 
 kafka_blueprint = Blueprint('kafka_blueprint', __name__)
 
 zk_dict = {}
 
 
-def zk_client(cluster):
-    zk = zk_dict.get(cluster.id)
-    if zk is None:
-        zk = KazooClient(hosts=cluster.zookeeper)
-        zk_dict[cluster.id] = zk
-    if 'CLOSED' == zk.client_state:
-        zk.start()
-    return zk
+@kafka_blueprint.before_app_first_request
+def run_on_start():
+    clusters = Cluster.query.all()
+    for cluster in [cluster for cluster in clusters if cluster.id not in zk_dict.keys()]:
+        zk_dict[cluster.id] = ClusterZookeeper(cluster.zookeeper)
 
 
 @kafka_blueprint.route('/cluster/index', methods=['GET', 'POST'])
@@ -40,16 +37,10 @@ def query_simple():
 
 # 获取broker的topic数量信息
 def get_zk_info(cluster):
-    topics = zk_client(cluster).get_children('/brokers/topics/')
-    brokers = zk_client(cluster).get_children('/brokers/ids/')
-    cluster.other_dict = {'topic_num': len(topics), 'broker_num': len(brokers)}
+    if cluster.id in zk_dict:
+        cluster.other_dict = {'topic_num': len(zk_dict[cluster.id].topics_dict),
+                              'broker_num': len(zk_dict[cluster.id].brokers_list)}
     return cluster
-
-
-@kafka_blueprint.route('/cluster/add', methods=['POST', 'GET'])
-@login_required
-def add():
-    return add_cluster()
 
 
 @kafka_blueprint.route('/cluster/update', methods=['POST', 'GET'])
@@ -62,10 +53,12 @@ def update():
     if cluster is None:
         return 'id not exit'
     else:
-        return add_cluster(cluster)
+        return add(cluster)
 
 
-def add_cluster(cluster=None):
+@kafka_blueprint.route('/cluster/add', methods=['POST', 'GET'])
+@login_required
+def add(cluster=None):
     name = request.values.get('name')
     broker = request.values.get('broker')
     zookeeper = request.values.get('zookeeper')
@@ -82,11 +75,16 @@ def add_cluster(cluster=None):
         return 'parameter {zookeeper} illegal'
     if cluster is None:
         cluster = Cluster(create_time=time.strftime('%Y-%m-%d %X', time.localtime()))
+    elif zookeeper != cluster.zookeeper:
+        zk_dict[cluster.id].close_zk()
+        zk_dict.pop(cluster.id)
     cluster.name = name
     cluster.broker = broker
     cluster.zookeeper = zookeeper
     cluster.remark = remark
     db.session.add(cluster)
+    db.session.commit()
+    run_on_start()
     return 'SUCCESS'
 
 
@@ -98,6 +96,8 @@ def delete():
         return 'parameter {id} exception'
     cluster = Cluster.query.filter(Cluster.id == cluster_id).first()
     if cluster is not None:
+        zk_dict[cluster.id].close_zk()
+        zk_dict.pop(cluster.id)
         db.session.delete(cluster)
         return 'SUCCESS'
     else:
@@ -128,19 +128,11 @@ def topic_list():
     if cluster is None:
         raise TypeError("Invalid type for 'cluster_id' (no data)")
     # 计算topic的消费者分组
-    groups = zk_client(cluster).get_children('/consumers/')
-    topic_groups = {}
-    for group in groups:
-        if zk_client(cluster).exists('/consumers/' + group + '/owners') is None:
-            continue
-        g_topics = zk_client(cluster).get_children('/consumers/' + group + '/owners')
-        for g_topic in g_topics:
-            topic_groups[g_topic] = topic_groups.get(g_topic, []) + [group]
-    topics = zk_client(cluster).get_children('/brokers/topics/')
+    topic_groups = get_topic_groups(cluster.id)
+    topics_dict = zk_dict[cluster.id].topics_dict
     res_list = []
-    for topic in topics:
-        topic_info = zk_client(cluster).get('/brokers/topics/' + topic)
-        partitions = json.loads(topic_info[0])["partitions"]
+    for topic, value in topics_dict.items():
+        partitions = value.topic_value
         s1 = set([])
         for k, v in partitions.items():
             rep_num = len(v)
@@ -156,7 +148,17 @@ def topic_list():
     return json_result(len(res_list), res_list[start:min(start + rows, len(res_list))])
 
 
+def get_topic_groups(cluster_id):
+    groups_dict = zk_dict[cluster_id].groups_dict
+    topic_groups = {}
+    for g, v in groups_dict.items():
+        for g_topic in v.topics_list:
+            topic_groups[g_topic] = topic_groups.get(g_topic, []) + [g]
+    return topic_groups
+
+
 ################################################################################################################
+
 
 @kafka_blueprint.route('/group/index', methods=['GET', 'POST'])
 @login_required
@@ -178,12 +180,12 @@ def group_list():
     topic_name = request.values.get('topic_name')
     res_list = []
     for group in groups_str.split(','):
-        if zk_client(cluster).exists('/consumers/' + group + '/owners/' + topic_name) is None:
+        if zk_dict[cluster.id].zk.exists('/consumers/' + group + '/owners/' + topic_name) is None:
             continue
-        partitions = zk_client(cluster).get_children('/consumers/' + group + '/owners/' + topic_name)
+        partitions = zk_dict[cluster.id].zk.get_children('/consumers/' + group + '/owners/' + topic_name)
         p_dict = {}
         for partition in partitions:
-            c_data = zk_client(cluster).get('/consumers/' + group + '/owners/' + topic_name + '/' + partition)
+            c_data = zk_dict[cluster.id].zk.get('/consumers/' + group + '/owners/' + topic_name + '/' + partition)
             c_name = c_data[0][:c_data[0].rfind('-')]
             p_dict[c_name] = [partition] + p_dict.get(c_name, [])
         for k, v in p_dict.items():
