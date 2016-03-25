@@ -19,11 +19,12 @@ def index():
 @message_blueprint.route('/error_stat', methods=['GET', 'POST'])
 @login_required
 def error_stat():
+    time_scope = request.values.get('time_scope')
     topic_name = request.values.get('topic_name')
     group_name = request.values.get('group_name')
     app_name = request.values.get('app_name')
     ip = request.values.get('ip')
-    return render_template('message/error_stat.html', topic_name=topic_name, group_name=group_name, app_name=app_name,ip=ip)
+    return render_template('message/error_stat.html', topic_name=topic_name, group_name=group_name, app_name=app_name,ip=ip, time_scope=time_scope)
 
 
 @message_blueprint.route('/get_error_stat', methods=['GET', 'POST'])

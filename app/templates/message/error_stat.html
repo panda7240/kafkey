@@ -35,7 +35,10 @@
     // 生成图表
     function initCharts(){
 
-        var time_scope = $('#timeScope_combox').combobox('getValue');
+        var time_scope = '{{time_scope}}';
+        if(!time_scope || time_scope=='None'){
+            time_scope = $('#timeScope_combox').combobox('getValue');
+        }
 
         initErrorCharts(time_scope);
     }
