@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import json
+import logging
 import time
 import app
 from app.main.controller import login_required
@@ -7,7 +8,7 @@ from elasticsearch.client import IndicesClient
 from flask import render_template, session, redirect, url_for, current_app, request, Blueprint
 
 message_blueprint = Blueprint('message_blueprint', __name__)
-
+logger = logging.getLogger('message_controller')
 
 
 @message_blueprint.route('/index', methods=['GET', 'POST'])
@@ -132,7 +133,7 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
                 error_stat_dict[date_time] = temp_list
 
             # error_stat_result.append(error_stat_dict)
-            print 'etype:[' + str(etype) + ']  datetime: [' + date_time + ']  count: [' + str(etype_count) + ']'
+            logger.debug('etype:[' + str(etype) + ']  datetime: [' + date_time + ']  count: [' + str(etype_count) + ']')
     xAxis = sorted(xAxis)
 
     # 发送异常数据集
