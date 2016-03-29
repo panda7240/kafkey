@@ -156,10 +156,13 @@ def topic_list():
 def create_topic_dict(topic, partitions, groups, topics_dict):
     broker_set = reduce(lambda x, y: x | set(y), partitions.values(), set([]))
     speed = 0
+    off_set = 0
     if 'speed' in topics_dict[topic].__dict__:
         speed = topics_dict[topic].speed
+        off_set = topics_dict[topic].off_set
     return {"topic_name": topic, "partition_num": len(partitions), "rep_num": len(partitions.values()[0]),
-            "broker_num": len(broker_set), 'group_num': len(groups), 'groups_str': ','.join(groups), 'speed': speed}
+            "broker_num": len(broker_set), 'group_num': len(groups), 'groups_str': ','.join(groups), 'speed': speed,
+            'off_set': off_set}
 
 
 def get_topic_groups(cluster_id):
@@ -169,12 +172,6 @@ def get_topic_groups(cluster_id):
         for g_topic in v.topics_list:
             topic_groups[g_topic] = topic_groups.get(g_topic, []) + [g]
     return topic_groups
-
-
-@kafka_blueprint.route('/topic/speed', methods=['GET', 'POST'])
-@login_required
-def topic_speed():
-    return 0
 
 
 ################################################################################################################
