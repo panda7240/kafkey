@@ -43,4 +43,8 @@ def create_app(config_name):
 
     app.register_blueprint(message_blueprint, url_prefix='/message')
 
+    from app.main.controller.monitorlog_controller import monitorlog_blueprint
+
+    app.register_blueprint(monitorlog_blueprint, url_prefix='/monitorlog')
+
     return app

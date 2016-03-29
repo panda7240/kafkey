@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    {% import '/macros.html' as macros %}
+    {{ macros.common_source() }}
+</head>
+<body>
+<div id="kafka_monitorlog_toolbar">
+    &nbsp;<label> 时刻:</label>
+    <input id="timestamp" class="easyui-datetimebox" style="width:150px;" />
+     &nbsp;
+    &nbsp;<label> 范围: </label>
+    <select id="mins" name="mins" style="width: 70px;"
+                panelHeight="auto" class="easyui-combobox" required="true" missingMessage="">
+            <option value="10" selected="selected">10分钟</option>
+            <option value="30">30分钟</option>
+    </select>
+    &nbsp;<label>app:</label>
+    <input class="easyui-textbox" type="text" id="app" name="app" value="{{ app }}"/>
+    &nbsp;<label>ip:</label>
+    <input class="easyui-textbox" type="text" id="ip" name="ip" value="{{ ip }}"/>
+    &nbsp;<label>host:</label>
+    <input class="easyui-textbox" type="text" id="host" name="host" value="{{ host }}"/>
+    &nbsp;<label>pid:</label>
+    <input class="easyui-textbox" type="text" id="pid" name="pid" value="{{ pid }}"/>
+    &nbsp;<label>mid:</label>
+    <input class="easyui-textbox" type="text" id="mid" name="mid" value="{{ mid }}"/>
+    &nbsp;<label>topic:</label>
+    <input class="easyui-textbox" type="text" id="topic" name="topic" value="{{ topic }}"/>
+    &nbsp;<label>stage:</label>
+    <select id="stage" name="stage" style="width: 70px;"
+                panelHeight="auto" class="easyui-combobox" >
+            <option value="" selected="selected">全部</option>
+            <option value="1">发送前</option>
+            <option value="2">发送后</option>
+            <option value="3">消费前</option>
+            <option value="4">消费后</option>
+    </select>
+    &nbsp;<label>etype:</label>
+     <select id="etype" name="etype" style="width: 70px;"
+                panelHeight="auto" class="easyui-combobox" >
+            <option value="" selected="selected">全部</option>
+            <option value="1">发送错误</option>
+            <option value="2">消费错误</option>
+    </select>
+    &nbsp;<label>group:</label>
+    <input class="easyui-textbox" type="text" id="group" name="group" value="{{ group }}"/>
+    &nbsp;<label>partition:</label>
+    <input class="easyui-numberbox" type="number" id="partition" name="partition" value="{{ partition }}"/>
+    &nbsp;<label>offset:</label>
+    <input class="easyui-numberbox" type="number" id="offset" name="offset" value="{{ offset }}"/>
+
+    <a href="javascript:void(0)" id="searchBtn" class="easyui-linkbutton" iconCls="icon-search" style="width:80px" onclick="doSearch()">Search</a>
+
+
+
+</div>
+<table id="kafka_monitorlog_dg" method="post" style="width:100%;"
+       fit="true"
+       toolbar="#kafka_monitorlog_toolbar"
+{#       singleSelect="True"#}
+       fitColumns="true"
+       rownumbers="true"
+{#       sortName="name"#}
+        >
+    <thead>
+    <tr>
+        <th halign="center" field="app" width="10%" sortable="true">应用名</th>
+        <th halign="center" field="ip" width="10%">ip</th>
+        <th halign="center" field="host" width="10%">host</th>
+        <th halign="center" field="pid" width="10%">pid</th>
+        <th halign="center" field="mid" width="10%">消息id</th>
+        <th halign="center" field="topic" width="10%">topic</th>
+        <th halign="center" field="stage" width="10%">阶段</th>
+        <th halign="center" field="etype" width="10%">错误类型</th>
+        <th halign="center" field="group" width="10%">消费者group</th>
+        <th halign="center" field="partition" width="10%">partition</th>
+        <th halign="center" field="offset" width="10%">offset</th>
+        <th halign="center" field="timestamp" formatter="dateTimeFormatter" width="10%">日志时间</th>
+        {#        <th halign="center" field="button" formatter="formatterButton" width="10%"></th>#}
+    </tr>
+    </thead>
+</table>
+
+<script type="text/javascript" charset="utf-8">
+
+    function dateTimeFormatter(value, rec, index) {
+        var date = new Date(value);
+        return date.Format("yyyy-MM-dd hh:mm:ss.S");
+    }
+
+    function getPageParameter() {
+
+        var app = $("#app").textbox('getValue').trim();
+        var ip = $("#ip").textbox('getValue').trim();
+        var host = $("#host").textbox('getValue').trim();
+        var pid = $("#pid").textbox('getValue').trim();
+        var mid = $("#mid").textbox('getValue').trim();
+        var topic = $("#topic").textbox('getValue').trim();
+        var stage = $("#stage").combobox('getValue');
+        var etype = $("#etype").combobox('getValue');
+        var group = $("#group").textbox('getValue').trim();
+        var partition = $("#partition").numberbox('getValue');
+        var offset = $("#offset").numberbox('getValue');
+        var mins = $("#mins").combobox('getValue');
+        var timestamp = common.detetimeboxParser($('#timestamp').datetimebox('getValue')).getTime();
+
+
+
+        return {
+            app:app,
+            ip:ip,
+            host:host,
+            pid:pid,
+            mid:mid,
+            topic:topic,
+            stage:stage,
+            etype:etype,
+            group:group,
+            partition:partition,
+            offset:offset,
+            timestamp:timestamp,
+            mins:mins
+        }
+    }
+
+
+    function doSearch(){
+        $('#kafka_monitorlog_dg').datagrid("reload", getPageParameter());
+
+    }
+
+    $(function () {
+
+        var app = $("#app").textbox({});
+        var ip = $("#ip").textbox({});
+        var host = $("#host").textbox({});
+        var pid = $("#pid").textbox({});
+        var mid = $("#mid").textbox({});
+        var topic = $("#topic").textbox({});
+        var stage = $("#stage").combobox({});
+        var etype = $("#etype").combobox({});
+        var group = $("#group").textbox({});
+        var partition = $("#partition").numberbox({});
+        var offset = $("#offset").numberbox({});
+        var mins = $("#mins").combobox({});
+{#        var timestamp = common.detetimeboxParser($('#timestamp').datetimebox('getValue')).getTime();#}
+
+        var _date = common.datetimeboxFormatter(new Date());
+
+        $('#timestamp').datetimebox({
+            formatter:common.datetimeboxFormatter,
+            required:true,
+            parser:common.detetimeboxParser,
+            value:_date
+        });
+
+        $('#kafka_monitorlog_dg').datagrid({
+            queryParams: getPageParameter(),
+            url: "/monitorlog/getdata",
+            onDblClickRow: function(index,row) {
+                var mid = row.mid;
+                createTabPanelForChildren(""+mid,"/monitorlog/detailpage?mid="+mid);
+{#                 $('#tabs').tabs('add', {#}
+{#                                title: title,#}
+{#                                content: html,#}
+{#                                closable: true#}
+{#                });#}
+            }
+        });
+    });
+
+
+createTabPanelForChildren = function (title, href) {
+
+        //获取tab
+        var iframeName = "link_iframeName";
+        var $main_tabs = parent.$('#tabs');
+        var tab = $main_tabs.tabs('getTab', title);
+        if (tab) {
+            $main_tabs.tabs('select', title);
+            iframeName += $main_tabs.tabs('getTabIndex', tab);
+            parent.$("#" + iframeName).attr('src', href);
+            return;
+        }
+        //如果存在，激活
+        iframeName += $main_tabs.tabs('tabs').length.toString();
+        var content = '<iframe id="' + iframeName + '" name="' + iframeName + '" src="' + href + '" frameborder="0" width="100%" height="99.5%"></iframe>';
+        //嵌入的其他链接
+        $main_tabs.tabs('add', {
+            title: title,
+            content: content,
+            closable: true,
+            tools: [
+                {
+                    iconCls: 'icon-reload',
+                    handler: function () {
+                        parent.$("#" + iframeName).attr('src', href);
+                    }
+                }
+            ]
+        });
+
+    };
+
+    function formatterButton(value, rowData, rowIndex) {
+        return '<a href="#" onclick="createTabPanelForChildren(\'Message统计[' + $('#topic_name').val() + rowData.group_name
+                + ']\',\'/message/error_stat?topic_name=' + $('#topic_name').val()
+                + '&group_name=' + rowData.group_name
+                + '\')"> Message统计信息</a>';
+    }
+
+
+
+    function getPhase(value){
+        if(value==1) return "发送前";
+        if(value==2) return "发送后";
+        if(value==3) return "消费前";
+        if(value==4) return "消费后";
+        return "";
+    }
+
+    function getEtype(value){
+        if(value==1) return "发送错误";
+        if(value==2) return "消费错误";
+        return "";
+    }
+
+</script>
+</body>
+</html>
