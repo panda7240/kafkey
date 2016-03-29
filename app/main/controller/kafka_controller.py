@@ -23,7 +23,7 @@ def run_on_start():
 
 def start_watch(cluster):
     try:
-        zk_dict[cluster.id] = ClusterZookeeper(cluster.zookeeper)
+        zk_dict[cluster.id] = ClusterZookeeper(cluster.zookeeper, cluster.broker)
         return 'SUCCESS'
     except KazooTimeoutError as e:
         return cluster.zookeeper + e.message
@@ -146,16 +146,20 @@ def topic_list():
     # 计算topic的消费者分组
     topic_groups = get_topic_groups(cluster.id)
     topics_dict = zk_dict[cluster.id].topics_dict
-    res_list = [create_topic_dict(topic, value.topic_value, topic_groups.get(topic, [])) for topic, value in
+    res_list = [create_topic_dict(topic, value.topic_value, topic_groups.get(topic, []), topics_dict) for topic, value
+                in
                 topics_dict.items() if search_str is None or topic.lower().find(search_str.lower()) > -1]
     start = (page - 1) * rows
     return json_result(len(res_list), res_list[start:min(start + rows, len(res_list))])
 
 
-def create_topic_dict(topic, partitions, groups):
+def create_topic_dict(topic, partitions, groups, topics_dict):
     broker_set = reduce(lambda x, y: x | set(y), partitions.values(), set([]))
+    speed = 0
+    if 'speed' in topics_dict[topic].__dict__:
+        speed = topics_dict[topic].speed
     return {"topic_name": topic, "partition_num": len(partitions), "rep_num": len(partitions.values()[0]),
-            "broker_num": len(broker_set), 'group_num': len(groups), 'groups_str': ','.join(groups)}
+            "broker_num": len(broker_set), 'group_num': len(groups), 'groups_str': ','.join(groups), 'speed': speed}
 
 
 def get_topic_groups(cluster_id):
@@ -165,6 +169,12 @@ def get_topic_groups(cluster_id):
         for g_topic in v.topics_list:
             topic_groups[g_topic] = topic_groups.get(g_topic, []) + [g]
     return topic_groups
+
+
+@kafka_blueprint.route('/topic/speed', methods=['GET', 'POST'])
+@login_required
+def topic_speed():
+    return 0
 
 
 ################################################################################################################

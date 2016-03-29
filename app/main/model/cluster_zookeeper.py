@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
+import threading
+import time
 from flask import json
+from kafka import KafkaConsumer, TopicPartition
 from kazoo.client import KazooClient
 from kazoo.recipe.watchers import ChildrenWatch, DataWatch
 
@@ -7,10 +10,11 @@ __author__ = 'ylq'
 
 
 class ClusterZookeeper(object):
-    def __init__(self, zookeeper_hosts):
+    def __init__(self, zookeeper_hosts, kafka_hosts):
         self.groups_dict = {}
         self.topics_dict = {}
         self.brokers_list = []
+        self.consumer = KafkaConsumer(bootstrap_servers=kafka_hosts.split(','))
         self.zk = KazooClient(hosts=zookeeper_hosts)
         self.zk.add_listener(self.keep_start)
         self.zk.start()
@@ -19,10 +23,12 @@ class ClusterZookeeper(object):
         ChildrenWatch(self.zk, '/consumers', self.groups_watch)
         ChildrenWatch(self.zk, '/brokers/topics', self.topics_watch)
         ChildrenWatch(self.zk, '/brokers/ids/', self.brokers_watch)
+        t = threading.Thread(target=self.latest, name=kafka_hosts)
+        t.setDaemon(True)
+        t.start()
 
     # 保证链接是可用的
     def keep_start(self, client_status):
-        print client_status
         if client_status != 'CONNECTED':
             try:
                 self.zk.start()
@@ -49,6 +55,7 @@ class ClusterZookeeper(object):
             t_v = TopicValue()
             self.topics_dict[topic] = t_v
             DataWatch(self.zk, '/brokers/topics/' + topic, t_v.topic_watch)
+            t_v.topic_partition = [TopicPartition(topic, p) for p in self.consumer.partitions_for_topic(topic)]
 
     # 监听broker节点
     def brokers_watch(self, children):
@@ -61,6 +68,21 @@ class ClusterZookeeper(object):
             self.zk.close()
         except():
             pass
+
+    def latest(self):
+        while True:
+            # time.sleep(0.1)
+            time.sleep(0.001)
+            for k, v in self.topics_dict.items():
+                partitions = v.topic_partition
+                self.consumer.assign(partitions)
+                self.consumer.seek_to_end(*partitions)
+                log_offset = reduce(lambda x, y: x + y, [self.consumer.position(p) for p in partitions])
+                now_timestamp = int(time.mktime(time.localtime()))
+                if 'timestamp' in v.__dict__ and v.timestamp is not None:
+                    v.speed = (log_offset - v.off_set) / (now_timestamp - v.timestamp)
+                v.timestamp = now_timestamp
+                v.off_set = log_offset
 
 
 class GroupOwnersTopic(object):
@@ -80,7 +102,6 @@ class TopicValue(object):
 
 
 if __name__ == '__main__':
-    zk_test = KazooClient(hosts='192.168.5.159:2181,192.168.5.159:2182,192.168.5.159:2183')
-    zk_test.start()
-    tops = zk_test.get_children('/brokers/topics/')
-    print len(tops)
+    ClusterZookeeper('192.168.5.159:2181,192.168.5.159:2182,192.168.5.159:2183',
+                     '192.168.5.158:9092,192.168.5.159:9092')
+    time.sleep(300)
