@@ -23,6 +23,12 @@ kafka + key : kafka的监控管理工具
 	```
 	source ./venv/bin/activate
 	```
+	
+* 退出虚拟环境
+
+	```
+	deactivate
+	```
 
 * 安装虚拟环境依赖包
 

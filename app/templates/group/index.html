@@ -17,10 +17,13 @@
        sortName="name">
     <thead>
     <tr>
-        <th halign="center" field="group_name" width="35%" sortable="true">分组</th>
-        <th halign="center" field="consumer" width="40%">consumer</th>
+        <th halign="center" field="group_name" width="30%" sortable="true">Group</th>
+        <th halign="center" field="consumer" width="30%">Consumer</th>
         <th halign="center" field="partition" width="8%">partition</th>
-        <th halign="center" field="button" formatter="formatterButton" width="10%"></th>
+        <th halign="center" field="topic_last_offset" width="8%">日志总量</th>
+        <th halign="center" field="group_sum_offset" width="8%">最大offset数</th>
+        <th halign="center" field="cumulate_rate" width="8%">堆积率</th>
+        <th halign="center" field="button" formatter="formatterButton" width="7%"></th>
     </tr>
     </thead>
 </table>
