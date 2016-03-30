@@ -54,7 +54,17 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
         if indicesClient.exists(index_name):
             index_list.append(index_name)
     if index_list.__len__() == 0:
-        return
+        error_stat_result = {
+            "xAxis": [],
+            "send_error_list": [],
+            "business_error_list": [],
+            "success": "true",
+            "group_name": group_name,
+            "topic_name": topic_name,
+            "app_name": app_name,
+            "ip": ip
+        }
+        return json.dumps(error_stat_result, encoding='utf8', ensure_ascii=False, indent=2)
 
     start_time = "now-" + str(time_scope) + "h/h"
     range_dict = {
@@ -141,13 +151,18 @@ def aggs_error_count(topic_name, group_name, app_name, ip, time_scope=1):
     # 业务异常数据集
     business_error_list = []
     for x_date_time in xAxis:
-        temp_etype_dict_list = error_stat_dict[x_date_time]
-        if temp_etype_dict_list:
-            for etype_dict in temp_etype_dict_list:
-                if etype_dict['etype'] == 1:
-                    send_error_list.append(etype_dict['count'])
-                else:
-                    business_error_list.append(etype_dict['count'])
+        if x_date_time in error_stat_dict:
+            temp_etype_dict_list = error_stat_dict[x_date_time]
+            if temp_etype_dict_list:
+                for etype_dict in temp_etype_dict_list:
+                    if etype_dict['etype'] == 1:
+                        send_error_list.append(etype_dict['count'])
+                    else:
+                        business_error_list.append(etype_dict['count'])
+        else:
+            send_error_list.append('0')
+            business_error_list.append('0')
+
 
     error_stat_result = {
         "xAxis": xAxis,
