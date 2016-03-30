@@ -212,18 +212,21 @@ def group_list():
             c_name = c_data[0][:c_data[0].rfind('-')]
             p_dict[c_name] = [partition] + p_dict.get(c_name, [])
 
-            group_sum_offset += int(get_offset_by_topic_and_group_and_consumer(cluster.id,topic_name, group, partition))
+            group_sum_offset += int(
+                get_offset_by_topic_and_group_and_consumer(cluster.id, topic_name, group, partition))
 
         cumulate_rate = None
-        if topic_last_offset!=0:
-           cumulate_rate = str(round((float(topic_last_offset) - float(group_sum_offset))/float(topic_last_offset), 7) * 100) + '%'
+        if topic_last_offset != 0:
+            cumulate_rate = str(
+                round((float(topic_last_offset) - float(group_sum_offset)) / float(topic_last_offset), 7) * 100) + '%'
 
-        res_list.extend([{"topic_last_offset": topic_last_offset, "group_sum_offset": group_sum_offset, "cumulate_rate":cumulate_rate ,"group_name": group, "consumer": k, "partition": ",".join(v)} for k, v in p_dict.items()])
+        res_list.extend([{"topic_last_offset": topic_last_offset, "group_sum_offset": group_sum_offset,
+                          "cumulate_rate": cumulate_rate, "group_name": group, "consumer": k, "partition": ",".join(v)}
+                         for k, v in p_dict.items()])
 
     return json.dumps(res_list)
 
 
-
-def get_offset_by_topic_and_group_and_consumer(cluser_id, topic_name,group_name, partition):
+def get_offset_by_topic_and_group_and_consumer(cluser_id, topic_name, group_name, partition):
     offset = zk_dict[cluser_id].zk.get('/consumers/' + group_name + '/offsets/' + topic_name + '/' + partition)[0]
     return offset
