@@ -67,5 +67,5 @@ def test(coverage=False):
 
 
 if __name__ == '__main__':
-    app.run(use_reloader=False)
+    app.run(use_reloader=True)
 
