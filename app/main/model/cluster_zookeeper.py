@@ -74,15 +74,18 @@ class ClusterZookeeper(object):
             # time.sleep(0.1)
             time.sleep(0.001)
             for k, v in self.topics_dict.items():
-                partitions = v.topic_partition
-                self.consumer.assign(partitions)
-                self.consumer.seek_to_end(*partitions)
-                log_offset = reduce(lambda x, y: x + y, [self.consumer.position(p) for p in partitions])
-                now_timestamp = int(time.mktime(time.localtime()))
-                if 'timestamp' in v.__dict__ and v.timestamp is not None:
-                    v.speed = (log_offset - v.off_set) / (now_timestamp - v.timestamp)
-                v.timestamp = now_timestamp
-                v.off_set = log_offset
+                try:
+                    partitions = v.topic_partition
+                    self.consumer.assign(partitions)
+                    self.consumer.seek_to_end(*partitions)
+                    log_offset = reduce(lambda x, y: x + y, [self.consumer.position(p) for p in partitions])
+                    now_timestamp = int(time.mktime(time.localtime()))
+                    if 'timestamp' in v.__dict__ and v.timestamp is not None:
+                        v.speed = (log_offset - v.off_set) / (now_timestamp - v.timestamp)
+                    v.timestamp = now_timestamp
+                    v.off_set = log_offset
+                except Exception as e:
+                    pass
 
 
 class GroupOwnersTopic(object):
