@@ -105,7 +105,7 @@
         var send_error_list = [];
         var business_error_list = [];
 
-        for(var i = 0; i < res.xAxis.length; i++){
+        if(res.xAxis.length>0){
             send_error_list = res.send_error_list;
             business_error_list = res.business_error_list;
         }
