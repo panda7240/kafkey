@@ -12,14 +12,24 @@ monitorlog_blueprint = Blueprint('monitorlog_blueprint', __name__)
 @monitorlog_blueprint.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    return render_template('monitorlog/index.html')
+    timestamp = request.values.get("timestamp")
+    etype = request.values.get("etype")
+    if timestamp==None:
+        timestamp=""
+    if etype == None:
+        etype = ""
+    return render_template('monitorlog/index.html', etype=etype, timestamp=timestamp)
 
 
 @monitorlog_blueprint.route('/detailpage', methods=['GET', 'POST'])
 @login_required
 def detailpage():
     mid = request.values.get("mid")
-    return render_template('monitorlog/detail.html', mid=mid)
+    timestamp = request.values.get("timestamp")
+    if timestamp==None:
+        timestamp=""
+
+    return render_template('monitorlog/detail.html', mid=mid, timestamp=timestamp)
 
 
 @monitorlog_blueprint.route('/getdata', methods=['GET', 'POST'])
@@ -153,10 +163,12 @@ def get_need_datas(indexs, arg_dict, size=10):
     }
 
     result = app.es.search(
+        ignore=404,
         index=indexs,
         body=body
     )
     req = []
+    # if result["status"] == 200 :
     for r in result['aggregations']['mid']['buckets']:
         try:
             req.append(r["last_msg"]["hits"]["hits"][0]["_source"])
@@ -186,6 +198,7 @@ def get_need_detail_datas(indexs, arg_dict, size=1000):
     }
 
     result = app.es.search(
+        ignore=404,
         index=indexs,
         body=body
     )

@@ -29,18 +29,10 @@
     &nbsp;<label>stage:</label>
     <select id="stage" name="stage" style="width: 70px;"
             panelHeight="auto" class="easyui-combobox">
-        <option value="" selected="selected">全部</option>
-        <option value="1">发送前</option>
-        <option value="2">发送后</option>
-        <option value="3">消费前</option>
-        <option value="4">消费后</option>
     </select>
     &nbsp;<label>etype:</label>
     <select id="etype" name="etype" style="width: 70px;"
             panelHeight="auto" class="easyui-combobox">
-        <option value="" selected="selected">全部</option>
-        <option value="1">发送错误</option>
-        <option value="2">消费错误</option>
     </select>
     &nbsp;<label>group:</label>
     <input class="easyui-textbox" type="text" id="group" name="group" value="{{ group }}"/>
@@ -73,7 +65,7 @@
         <th halign="center" field="pid" width="10%">pid</th>
         <th halign="center" field="mid" width="10%">消息id</th>
         <th halign="center" field="topic" width="10%">topic</th>
-        <th halign="center" field="stage" width="10% formatter="getPhase" >阶段</th>
+        <th halign="center" field="stage" width="10%"  formatter='getPhase' >阶段</th>
         <th halign="center" field="etype" width="10%" formatter="getEtype" >错误类型</th>
         <th halign="center" field="group" width="10%">消费者group</th>
         <th halign="center" field="partition" width="10%">partition</th>
@@ -130,20 +122,59 @@
 
     $(function () {
 
-        var app = $("#app").textbox({});
-        var ip = $("#ip").textbox({});
-        var host = $("#host").textbox({});
-        var pid = $("#pid").textbox({});
-        var topic = $("#topic").textbox({});
-        var stage = $("#stage").combobox({});
-        var etype = $("#etype").combobox({});
-        var group = $("#group").textbox({});
-        var partition = $("#partition").numberbox({});
-        var offset = $("#offset").numberbox({});
-        var mins = $("#mins").combobox({});
+        $("#app").textbox({});
+        $("#ip").textbox({});
+        $("#host").textbox({});
+        $("#pid").textbox({});
+        $("#topic").textbox({});
+        $("#stage").combobox({
+            valueField: 'value',
+            textField: 'label',
+            value: '',
+            data: [{
+                label: '全部',
+                value: ""
+            },{
+                label: '发送前',
+                value: "1"
+            },{
+                label: '发送后',
+                value: "2"
+            },{
+                label: '消费前',
+                value: "3"
+            }, {
+                label: '消费后',
+                value: "4"
+            }]
+        });
+        $("#etype").combobox({
+            valueField: 'value',
+            textField: 'label',
+            value: '{{ etype }}',
+            data: [{
+                label: '全部',
+                value: ""
+            },{
+                label: '发送错误',
+                value: "1"
+            }, {
+                label: '消费错误',
+                value: "2"
+            }]
+        });
+        $("#group").textbox({});
+        $("#partition").numberbox({});
+        $("#offset").numberbox({});
+        $("#mins").combobox({});
         {#        var timestamp = common.detetimeboxParser($('#timestamp').datetimebox('getValue')).getTime();#}
 
-        var _date = common.datetimeboxFormatter(new Date());
+        var _data = "{{ timestamp }}".trim();
+        if (_data) {
+            _date = common.datetimeboxFormatter(new Date(Number(_data) + 1000));
+        } else {
+            _date = common.datetimeboxFormatter(new Date());
+        }
 
         $('#timestamp').datetimebox({
             formatter: common.datetimeboxFormatter,
@@ -157,25 +188,15 @@
             url: "/monitorlog/detail",
             view: detailview,
             detailFormatter: function (rowIndex, rowData) {
-                var res = '<table style="border: 0;font-size: 11px;line-height:150%">';
-                res += '<tr><td style="border-width:0 1px 0 0 ;border-bottom: 0;">消息详情: &nbsp;</td><td style="border:0">' +
-                '<pre>' + rowData.msg == undefined ? "" : rowData.msg + '</pre>' +
-                '</td></tr>';
-                res += '<tr><td style="border-width:0 1px 0 0 ;border-bottom: 0;">错误详情: &nbsp;</td><td style="border:0">' +
-                '<pre>' + rowData.error == undefined ? "" : rowData.error + '</pre>' +
-                '</td></tr>';
-                res += '</table>';
+                var res = '<table  style="border: 0;font-size: 11px;line-height:150%"><tr><td style="border-width:0 1px 1px 0;">消息内容: &nbsp;</td><td style="border-width:0 0 1px 0;border-right-width:0;" ><pre>'
+                + (rowData.msg == undefined ? "" : rowData.msg )
+                + '</pre></td></tr><tr><td style="border-width:0 1px 0 0 ;">错误详情: &nbsp;</td><td style="border:0"><pre>'
+                + (rowData.error == undefined ? "" : rowData.error)
+                + '</pre></td></tr></table>';
                 return res;
             }
         });
     });
-
-
-    function lookDetail(index, row) {
-        var mid = row.mid;
-        alert(mid);
-
-    }
 
     function getPhase(value){
         if(value==1) return "发送前";

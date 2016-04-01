@@ -70,7 +70,11 @@
                     var date_time = param.name;
                     var etype = (param.seriesName == "业务异常" ? 2 : 1);
                     var timestamp = Date.parse(new Date(date_time));
-                    var url = "/xxx";
+                    console.log(timestamp);
+                    var url = "/monitorlog/index?timestamp=" + timestamp + "&etype=" + etype ;
+
+                    console.log(url);
+
                     createTabPanelForChildren(date_time + "前十分钟" +param.seriesName , url);
 
                 });
