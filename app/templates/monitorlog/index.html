@@ -9,13 +9,13 @@
 <body>
 <div id="kafka_monitorlog_toolbar">
     &nbsp;<label> 时刻:</label>
-    <input id="timestamp" class="easyui-datetimebox" style="width:150px;" />
-     &nbsp;
+    <input id="timestamp" class="easyui-datetimebox" style="width:150px;"/>
+    &nbsp;
     &nbsp;<label> 范围: </label>
     <select id="mins" name="mins" style="width: 70px;"
-                panelHeight="auto" class="easyui-combobox" required="true" missingMessage="">
-            <option value="10" selected="selected">10分钟</option>
-            <option value="30">30分钟</option>
+            panelHeight="auto" class="easyui-combobox" required="true" missingMessage="">
+        <option value="10" selected="selected">10分钟</option>
+        <option value="30">30分钟</option>
     </select>
     &nbsp;<label>app:</label>
     <input class="easyui-textbox" type="text" id="app" name="app" value="{{ app }}"/>
@@ -31,19 +31,12 @@
     <input class="easyui-textbox" type="text" id="topic" name="topic" value="{{ topic }}"/>
     &nbsp;<label>stage:</label>
     <select id="stage" name="stage" style="width: 70px;"
-                panelHeight="auto" class="easyui-combobox" >
-            <option value="" selected="selected">全部</option>
-            <option value="1">发送前</option>
-            <option value="2">发送后</option>
-            <option value="3">消费前</option>
-            <option value="4">消费后</option>
+            panelHeight="auto" class="easyui-combobox">
+
     </select>
     &nbsp;<label>etype:</label>
-     <select id="etype" name="etype" style="width: 70px;"
-                panelHeight="auto" class="easyui-combobox" >
-            <option value="" selected="selected">全部</option>
-            <option value="1">发送错误</option>
-            <option value="2">消费错误</option>
+    <select id="etype" name="etype" style="width: 70px;"
+            panelHeight="auto" class="easyui-combobox">
     </select>
     &nbsp;<label>group:</label>
     <input class="easyui-textbox" type="text" id="group" name="group" value="{{ group }}"/>
@@ -52,18 +45,18 @@
     &nbsp;<label>offset:</label>
     <input class="easyui-numberbox" type="number" id="offset" name="offset" value="{{ offset }}"/>
 
-    <a href="javascript:void(0)" id="searchBtn" class="easyui-linkbutton" iconCls="icon-search" style="width:80px" onclick="doSearch()">Search</a>
-
+    <a href="javascript:void(0)" id="searchBtn" class="easyui-linkbutton" iconCls="icon-search" style="width:80px"
+       onclick="doSearch()">Search</a>
 
 
 </div>
 <table id="kafka_monitorlog_dg" method="post" style="width:100%;"
        fit="true"
        toolbar="#kafka_monitorlog_toolbar"
-{#       singleSelect="True"#}
+        {#       singleSelect="True"#}
        fitColumns="true"
        rownumbers="true"
-{#       sortName="name"#}
+        {#       sortName="name"#}
         >
     <thead>
     <tr>
@@ -73,8 +66,8 @@
         <th halign="center" field="pid" width="10%">pid</th>
         <th halign="center" field="mid" width="10%">消息id</th>
         <th halign="center" field="topic" width="10%">topic</th>
-        <th halign="center" field="stage" width="10%">阶段</th>
-        <th halign="center" field="etype" width="10%">错误类型</th>
+        <th halign="center" field="stage" width="10%"  formatter='getPhase' >阶段</th>
+        <th halign="center" field="etype" width="10%" formatter="getEtype" >错误类型</th>
         <th halign="center" field="group" width="10%">消费者group</th>
         <th halign="center" field="partition" width="10%">partition</th>
         <th halign="center" field="offset" width="10%">offset</th>
@@ -108,72 +101,112 @@
         var timestamp = common.detetimeboxParser($('#timestamp').datetimebox('getValue')).getTime();
 
 
-
         return {
-            app:app,
-            ip:ip,
-            host:host,
-            pid:pid,
-            mid:mid,
-            topic:topic,
-            stage:stage,
-            etype:etype,
-            group:group,
-            partition:partition,
-            offset:offset,
-            timestamp:timestamp,
-            mins:mins
+            app: app,
+            ip: ip,
+            host: host,
+            pid: pid,
+            mid: mid,
+            topic: topic,
+            stage: stage,
+            etype: etype,
+            group: group,
+            partition: partition,
+            offset: offset,
+            timestamp: timestamp,
+            mins: mins
         }
     }
 
 
-    function doSearch(){
+    function doSearch() {
         $('#kafka_monitorlog_dg').datagrid("reload", getPageParameter());
 
     }
 
     $(function () {
 
-        var app = $("#app").textbox({});
-        var ip = $("#ip").textbox({});
-        var host = $("#host").textbox({});
-        var pid = $("#pid").textbox({});
-        var mid = $("#mid").textbox({});
-        var topic = $("#topic").textbox({});
-        var stage = $("#stage").combobox({});
-        var etype = $("#etype").combobox({});
-        var group = $("#group").textbox({});
-        var partition = $("#partition").numberbox({});
-        var offset = $("#offset").numberbox({});
-        var mins = $("#mins").combobox({});
-{#        var timestamp = common.detetimeboxParser($('#timestamp').datetimebox('getValue')).getTime();#}
+        $("#app").textbox({});
+        $("#ip").textbox({});
+        $("#host").textbox({});
+        $("#pid").textbox({});
+        $("#mid").textbox({});
+        $("#topic").textbox({});
+        $("#stage").combobox({
+            valueField: 'value',
+            textField: 'label',
+            value: '',
+            data: [{
+                label: '全部',
+                value: ""
+            },{
+                label: '发送前',
+                value: "1"
+            },{
+                label: '发送后',
+                value: "2"
+            },{
+                label: '消费前',
+                value: "3"
+            }, {
+                label: '消费后',
+                value: "4"
+            }]
+        });
+        $("#etype").combobox({
+            valueField: 'value',
+            textField: 'label',
+            value: '{{ etype }}',
+            data: [{
+                label: '全部',
+                value: ""
+            },{
+                label: '发送错误',
+                value: "1"
+            }, {
+                label: '消费错误',
+                value: "2"
+            }]
+        });
+        $("#group").textbox({});
+        $("#partition").numberbox({});
+        $("#offset").numberbox({});
+        $("#mins").combobox({});
+        {#        var timestamp = common.detetimeboxParser($('#timestamp').datetimebox('getValue')).getTime();#}
 
-        var _date = common.datetimeboxFormatter(new Date());
+
+        var _data = "{{ timestamp }}".trim();
+        if (_data) {
+            _date = common.datetimeboxFormatter(new Date(Number(_data)));
+        } else {
+            _date = common.datetimeboxFormatter(new Date());
+        }
 
         $('#timestamp').datetimebox({
-            formatter:common.datetimeboxFormatter,
-            required:true,
-            parser:common.detetimeboxParser,
-            value:_date
+            formatter: common.datetimeboxFormatter,
+            required: true,
+            parser: common.detetimeboxParser,
+            value: _date
         });
 
         $('#kafka_monitorlog_dg').datagrid({
             queryParams: getPageParameter(),
             url: "/monitorlog/getdata",
-            onDblClickRow: function(index,row) {
+            onDblClickRow: function (index, row) {
                 var mid = row.mid;
-                createTabPanelForChildren(""+mid,"/monitorlog/detailpage?mid="+mid);
-{#                 $('#tabs').tabs('add', {#}
-{#                                title: title,#}
-{#                                content: html,#}
-{#                                closable: true#}
-{#                });#}
+                var timestamp = row.timestamp;
+                createTabPanelForChildren("" + mid, "/monitorlog/detailpage?mid=" + mid + "&timestamp=" + timestamp);
+                {#                 $('#tabs').tabs('add', {#}
+                {#                                title: title,#}
+                {#                                content: html,#}
+                {#                                closable: true#}
+                {#                });#}
             }
         });
     });
 
 
-createTabPanelForChildren = function (title, href) {
+    createTabPanelForChildren = function (title, href) {
 
         //获取tab
         var iframeName = "link_iframeName";
@@ -213,18 +246,18 @@ createTabPanelForChildren = function (title, href) {
     }
 
 
-
-    function getPhase(value){
-        if(value==1) return "发送前";
-        if(value==2) return "发送后";
-        if(value==3) return "消费前";
-        if(value==4) return "消费后";
+    function getPhase(value) {
+        if (value == 1) return "发送前";
+        if (value == 2) return "发送后";
+        if (value == 3) return "消费前";
+        if (value == 4) return "消费后";
+        console.log(value);
         return "";
     }
 
-    function getEtype(value){
-        if(value==1) return "发送错误";
-        if(value==2) return "消费错误";
+    function getEtype(value) {
+        if (value == 1) return "发送错误";
+        if (value == 2) return "消费错误";
         return "";
     }
 
